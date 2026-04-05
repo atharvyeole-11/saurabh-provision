@@ -7,7 +7,7 @@ import Footer from '@/components/Footer';
 import OrderBill from '@/components/OrderBill';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
-import { ArrowLeft, CheckCircle, Clock, CreditCard, Cash, Truck } from 'lucide-react';
+import { ArrowLeft, CheckCircle, Clock, CreditCard, ShoppingBag } from 'lucide-react';
 
 export default function Checkout() {
   const router = useRouter();
