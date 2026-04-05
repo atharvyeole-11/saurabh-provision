@@ -1,262 +1,193 @@
-'use client';
-import Link from 'next/link';
-import { useState } from 'react';
-import Navbar from '@/components/Navbar';
-import Footer from '@/components/Footer';
+'use client'
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
-import { Trash2, Plus, Minus, ShoppingBag, ArrowLeft, CreditCard, Clock } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import toast from 'react-hot-toast';
+import Link from 'next/link';
 
-export default function Cart() {
-  const { cart, removeFromCart, updateQuantity, clearCart, getCartTotal } = useCart();
+const TIME_SLOTS = [
+  '7:00 AM - 8:00 AM','8:00 AM - 9:00 AM','9:00 AM - 10:00 AM',
+  '10:00 AM - 11:00 AM','11:00 AM - 12:00 PM','12:00 PM - 1:00 PM',
+  '1:00 PM - 2:00 PM','2:00 PM - 3:00 PM','3:00 PM - 4:00 PM',
+  '4:00 PM - 5:00 PM','5:00 PM - 6:00 PM','6:00 PM - 7:00 PM',
+  '7:00 PM - 8:00 PM','8:00 PM - 9:00 PM','9:00 PM - 10:00 PM',
+  '10:00 PM - 11:00 PM'
+];
+
+export default function CartPage() {
+  const { cart, removeFromCart, updateQty, clearCart, cartTotal, discountTotal, pickupTime, setPickupTime, paymentMode, setPaymentMode } = useCart();
   const { user } = useAuth();
-  const [selectedPickupTime, setSelectedPickupTime] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState('cash');
+  const router = useRouter();
+  const [placing, setPlacing] = useState(false);
 
-  const pickupTimeSlots = [
-    '7:00AM-8:00AM', '8:00AM-9:00AM', '9:00AM-10:00AM', '10:00AM-11:00AM',
-    '11:00AM-12:00PM', '12:00PM-1:00PM', '1:00PM-2:00PM', '2:00PM-3:00PM',
-    '3:00PM-4:00PM', '4:00PM-5:00PM', '5:00PM-6:00PM', '6:00PM-7:00PM',
-    '7:00PM-8:00PM', '8:00PM-9:00PM', '9:00PM-10:00PM', '10:00PM-11:00PM'
-  ];
+  const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
 
-  const handleCheckout = () => {
+  const handlePlaceOrder = async () => {
     if (!user) {
-      alert('Please login to continue with checkout');
+      toast.error('Please login first!');
+      router.push('/login');
       return;
     }
-    if (!selectedPickupTime) {
-      alert('Please select a pickup time');
+    if (!pickupTime) {
+      toast.error('Please select a pickup time!');
       return;
     }
-    localStorage.setItem('selectedPickupTime', selectedPickupTime);
-    localStorage.setItem('paymentMethod', paymentMethod);
-    window.location.href = '/checkout';
-  };
+    if (cart.length === 0) {
+      toast.error('Your cart is empty!');
+      return;
+    }
 
-  const calculateItemTotal = (item) => {
-    const hasDiscount = item.discount && item.discount > 0;
-    const price = hasDiscount ? item.price * (1 - item.discount / 100) : item.price;
-    return price * item.quantity;
-  };
+    setPlacing(true);
+    try {
+      const orderId = 'SP' + Date.now().toString().slice(-6);
+      const orderData = {
+        user: user.id,
+        orderId,
+        items: cart.map(i => ({
+          product: i._id,
+          name: i.name,
+          qty: i.qty,
+          price: i.price,
+          discount: i.discount || 0
+        })),
+        subtotal,
+        discountAmount: discountTotal,
+        totalAmount: cartTotal,
+        paymentMode,
+        pickupTime,
+        status: 'pending'
+      };
 
-  const calculateSubtotal = () => {
-    return cart.reduce((total, item) => total + calculateItemTotal(item), 0);
-  };
+      const res = await fetch('/api/orders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(orderData)
+      });
 
-  const calculateDiscount = () => {
-    return cart.reduce((total, item) => {
-      if (item.discount && item.discount > 0) {
-        return total + (item.price * item.discount / 100) * item.quantity;
+      const data = await res.json();
+      if (res.ok) {
+        clearCart();
+        toast.success('Order placed successfully! 🎉');
+        router.push('/orders');
+      } else {
+        toast.error(data.error || 'Failed to place order');
       }
-      return total;
-    }, 0);
-  };
-
-  const calculateFinalTotal = () => {
-    return calculateSubtotal() - calculateDiscount();
+    } catch (err) {
+      toast.error('Something went wrong');
+    } finally {
+      setPlacing(false);
+    }
   };
 
   if (cart.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Navbar />
-        
-        <main className="max-w-4xl mx-auto px-4 py-16">
-          <div className="bg-white rounded-lg shadow-sm p-8 text-center">
-            <div className="bg-gray-100 rounded-full w-20 h-20 mx-auto mb-6 flex items-center justify-center">
-              <ShoppingBag className="w-10 h-10 text-gray-400" />
-            </div>
-            <h1 className="text-2xl font-bold text-gray-900 mb-4">Your cart is empty</h1>
-            <p className="text-gray-600 mb-8">
-              Looks like you haven't added any products to your cart yet.
-            </p>
-            <Link
-              href="/products"
-              className="inline-flex items-center bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Continue Shopping
-            </Link>
-          </div>
-        </main>
-
-        <Footer />
+      <div className="min-h-screen flex flex-col items-center justify-center">
+        <p className="text-2xl mb-2">🛒</p>
+        <h2 className="text-xl font-bold mb-2">Your cart is empty</h2>
+        <Link href="/products" className="bg-green-600 text-white px-6 py-2 rounded-lg">
+          Browse Products
+        </Link>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      
-      <main className="max-w-6xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Cart Items */}
-          <div className="lg:col-span-2">
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">Shopping Cart ({cart.length} items)</h2>
-              
-              <div className="space-y-4">
-                {cart.map((item) => {
-                  const hasDiscount = item.discount && item.discount > 0;
-                  const price = hasDiscount ? item.price * (1 - item.discount / 100) : item.price;
-                  const itemTotal = price * item.quantity;
-                  
-                  return (
-                    <div key={item._id} className="flex items-center gap-4 p-4 border border-gray-200 rounded-lg">
-                      <div className="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center">
-                        {item.images && item.images.length > 0 ? (
-                          <img
-                            src={item.images[0]}
-                            alt={item.name}
-                            className="w-full h-full object-cover rounded-lg"
-                          />
-                        ) : (
-                          <span className="text-gray-400 text-xs">No Img</span>
-                        )}
-                      </div>
-                      
-                      <div className="flex-1">
-                        <h3 className="font-semibold text-gray-900 mb-1">{item.name}</h3>
-                        <div className="flex items-center gap-2 mb-2">
-                          {hasDiscount && (
-                            <span className="text-gray-500 line-through text-sm">₹{item.price}</span>
-                          )}
-                          <span className="text-green-600 font-bold">₹{price.toFixed(2)}</span>
-                          <span className="text-gray-500 text-sm">/{item.unit}</span>
-                        </div>
-                        
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => updateQuantity(item._id, item.quantity - 1)}
-                            className="p-1 bg-gray-100 hover:bg-gray-200 rounded transition-colors"
-                            disabled={item.quantity <= 1}
-                          >
-                            <Minus className="w-4 h-4" />
-                          </button>
-                          <span className="w-12 text-center font-medium">{item.quantity}</span>
-                          <button
-                            onClick={() => updateQuantity(item._id, item.quantity + 1)}
-                            className="p-1 bg-gray-100 hover:bg-gray-200 rounded transition-colors"
-                          >
-                            <Plus className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                      
-                      <div className="text-right">
-                        <div className="font-bold text-green-600">₹{itemTotal.toFixed(2)}</div>
-                        <button
-                          onClick={() => removeFromCart(item._id)}
-                          className="mt-2 p-2 text-red-500 hover:text-red-700 transition-colors"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
+    <div className="max-w-4xl mx-auto px-4 py-8">
+      <h1 className="text-2xl font-bold mb-6">Your Cart</h1>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-3">
+          {cart.map(item => (
+            <div key={item._id} className="bg-white border rounded-xl p-4 flex items-center gap-4">
+              <div className="w-16 h-16 bg-green-100 rounded-lg flex items-center justify-center text-2xl">
+                🛒
+              </div>
+              <div className="flex-1">
+                <h3 className="font-medium">{item.name}</h3>
+                <p className="text-green-600 font-bold">₹{item.price}</p>
+                {item.discount > 0 && (
+                  <p className="text-xs text-orange-500">{item.discount}% OFF applied</p>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                <button onClick={() => updateQty(item._id, item.qty - 1)}
+                  className="w-8 h-8 border rounded-full flex items-center justify-center hover:bg-gray-100">-</button>
+                <span className="w-8 text-center font-bold">{item.qty}</span>
+                <button onClick={() => updateQty(item._id, item.qty + 1)}
+                  className="w-8 h-8 border rounded-full flex items-center justify-center hover:bg-gray-100">+</button>
+              </div>
+              <div className="text-right">
+                <p className="font-bold">₹{(item.price * item.qty).toFixed(0)}</p>
+                <button onClick={() => removeFromCart(item._id)}
+                  className="text-red-500 text-xs mt-1 hover:underline">Remove</button>
               </div>
             </div>
+          ))}
+        </div>
+
+        <div className="space-y-4">
+          <div className="bg-white border rounded-xl p-4">
+            <h3 className="font-bold mb-3">Select Pickup Time *</h3>
+            <select
+              value={pickupTime}
+              onChange={e => setPickupTime(e.target.value)}
+              className="w-full border rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+            >
+              <option value="">-- Select Time Slot --</option>
+              {TIME_SLOTS.map(slot => (
+                <option key={slot} value={slot}>{slot}</option>
+              ))}
+            </select>
           </div>
 
-          {/* Order Summary */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow-sm p-6 sticky top-4">
-              <h2 className="text-xl font-bold text-gray-900 mb-6">Order Summary</h2>
-              
-              {/* Pickup Time Selection */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <Clock className="w-4 h-4 inline mr-1" />
-                  Pickup Time
-                </label>
-                <select
-                  value={selectedPickupTime}
-                  onChange={(e) => setSelectedPickupTime(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
-                >
-                  <option value="">Select pickup time</option>
-                  {pickupTimeSlots.map((slot) => (
-                    <option key={slot} value={slot}>{slot}</option>
-                  ))}
-                </select>
+          <div className="bg-white border rounded-xl p-4">
+            <h3 className="font-bold mb-3">Payment Method</h3>
+            <label className="flex items-center gap-3 p-2 border rounded-lg mb-2 cursor-pointer hover:bg-green-50">
+              <input type="radio" name="payment" value="cash"
+                checked={paymentMode === 'cash'}
+                onChange={() => setPaymentMode('cash')} />
+              <div>
+                <p className="font-medium">💵 Cash on Pickup</p>
+                <p className="text-xs text-gray-500">Pay when you collect</p>
               </div>
-
-              {/* Payment Method */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  <CreditCard className="w-4 h-4 inline mr-1" />
-                  Payment Method
-                </label>
-                <div className="space-y-2">
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      value="cash"
-                      checked={paymentMethod === 'cash'}
-                      onChange={(e) => setPaymentMethod(e.target.value)}
-                      className="mr-2"
-                    />
-                    <span>Cash on Pickup</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="radio"
-                      value="online"
-                      checked={paymentMethod === 'online'}
-                      onChange={(e) => setPaymentMethod(e.target.value)}
-                      className="mr-2"
-                    />
-                    <span>Pay Online</span>
-                  </label>
-                </div>
+            </label>
+            <label className="flex items-center gap-3 p-2 border rounded-lg cursor-pointer hover:bg-blue-50">
+              <input type="radio" name="payment" value="online"
+                checked={paymentMode === 'online'}
+                onChange={() => setPaymentMode('online')} />
+              <div>
+                <p className="font-medium">💳 Pay Online</p>
+                <p className="text-xs text-gray-500">Contact: 9766689821</p>
               </div>
+            </label>
+          </div>
 
-              {/* Price Breakdown */}
-              <div className="space-y-3 mb-6">
-                <div className="flex justify-between text-sm">
-                  <span>Subtotal</span>
-                  <span>₹{calculateSubtotal().toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-sm text-green-600">
-                  <span>Discount</span>
-                  <span>-₹{calculateDiscount().toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>Delivery Fee</span>
-                  <span>₹0.00</span>
-                </div>
-                <div className="border-t pt-3">
-                  <div className="flex justify-between text-lg font-bold text-green-600">
-                    <span>Total</span>
-                    <span>₹{calculateFinalTotal().toFixed(2)}</span>
-                  </div>
-                </div>
+          <div className="bg-white border rounded-xl p-4">
+            <h3 className="font-bold mb-3">Bill Summary</h3>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span>Subtotal</span><span>₹{subtotal.toFixed(2)}</span>
               </div>
-
-              {/* Action Buttons */}
-              <div className="space-y-3">
-                <button
-                  onClick={handleCheckout}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-lg font-semibold transition-colors"
-                >
-                  Place Order
-                </button>
-                <button
-                  onClick={clearCart}
-                  className="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 rounded-lg transition-colors"
-                >
-                  Clear Cart
-                </button>
+              {discountTotal > 0 && (
+                <div className="flex justify-between text-green-600">
+                  <span>Discount</span><span>-₹{discountTotal.toFixed(2)}</span>
+                </div>
+              )}
+              <div className="flex justify-between font-bold text-lg border-t pt-2">
+                <span>Total</span>
+                <span className="text-green-700">₹{cartTotal.toFixed(2)}</span>
               </div>
             </div>
+            <button
+              onClick={handlePlaceOrder}
+              disabled={placing}
+              className="mt-4 w-full bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700 disabled:opacity-50 transition"
+            >
+              {placing ? 'Placing Order...' : '🛒 Place Order'}
+            </button>
           </div>
         </div>
-      </main>
-
-      <Footer />
+      </div>
     </div>
   );
 }

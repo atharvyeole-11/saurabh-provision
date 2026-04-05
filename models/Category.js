@@ -1,41 +1,7 @@
-import { Schema } from 'mongoose';
-
-const categorySchema = new Schema({
-  name: {
-    type: String,
-    required: true,
-    unique: true,
-    trim: true,
-  },
-  description: {
-    type: String,
-    trim: true,
-  },
-  image: {
-    type: String,
-    trim: true,
-  },
-  isActive: {
-    type: Boolean,
-    default: true,
-  },
-  displayOrder: {
-    type: Number,
-    default: 0,
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now,
-  },
-});
-
-categorySchema.pre('save', function(next) {
-  this.updatedAt = Date.now();
-  next();
-});
-
-export default categorySchema;
+import mongoose from 'mongoose';
+const CategorySchema = new mongoose.Schema({
+  name: { type: String, required: true, unique: true },
+  icon: { type: String, default: '🛒' },
+  slug: { type: String, unique: true }
+}, { timestamps: true });
+export default mongoose.models.Category || mongoose.model('Category', CategorySchema);

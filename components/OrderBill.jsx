@@ -1,188 +1,124 @@
-'use client';
-import { Phone, MapPin, Clock, IndianRupee, Package, User } from 'lucide-react';
+'use client'
+import { useRef } from 'react';
 
-export default function OrderBill({ order, showHeader = true }) {
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800';
-      case 'confirmed':
-        return 'bg-blue-100 text-blue-800';
-      case 'preparing':
-        return 'bg-purple-100 text-purple-800';
-      case 'ready':
-        return 'bg-indigo-100 text-indigo-800';
-      case 'delivered':
-        return 'bg-green-100 text-green-800';
-      case 'cancelled':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
+export default function OrderBill({ order }) {
+  const billRef = useRef();
+
+  const printBill = () => {
+    const content = billRef.current.innerHTML;
+    const win = window.open('', '_blank');
+    win.document.write(`
+      <html><head><title>Order Bill - Saurabh Provision</title>
+      <style>
+        body { font-family: monospace; max-width: 400px; margin: 0 auto; padding: 20px; }
+        .divider { border-top: 1px dashed #000; margin: 8px 0; }
+        .row { display: flex; justify-content: space-between; }
+        .center { text-align: center; }
+        .bold { font-weight: bold; }
+        .total { font-size: 18px; font-weight: bold; }
+      </style></head>
+      <body>${content}</body></html>
+    `);
+    win.document.close();
+    win.print();
   };
 
-  const formatOrderDate = (dateString) => {
-    try {
-      return new Date(dateString).toLocaleDateString('en-IN', {
-        year: 'numeric',
-        month: 'short',
-        day: '2-digit',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true
-      });
-    } catch (error) {
-      return 'Invalid date';
-    }
-  };
+  if (!order) return null;
 
-  if (!order) {
-    return (
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <p className="text-gray-500 text-center">Order data not available</p>
-      </div>
-    );
-  }
+  const subtotal = order.items?.reduce((s, i) => s + i.price * i.qty, 0) || 0;
+  const discount = order.discountAmount || 0;
+  const total = order.totalAmount || 0;
 
   return (
-    <div className="bg-white rounded-lg shadow-md overflow-hidden">
-      {showHeader && (
-        <div className="bg-gradient-to-r from-green-600 to-green-700 text-white p-6">
-          <div className="flex justify-between items-start">
-            <div>
-              <h2 className="text-2xl font-bold">Order Receipt</h2>
-              <p className="text-green-100 mt-1">Order #{order._id.slice(-8)}</p>
-            </div>
-            <div className="text-right">
-              <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(order.status)}`}>
-                {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
-              </span>
-            </div>
-          </div>
-        </div>
-      )}
-
-      <div className="p-6 space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
-              <User className="w-4 h-4 mr-2 text-green-600" />
-              Customer Details
-            </h3>
-            <div className="space-y-2 text-sm">
-              <p><span className="font-medium">Name:</span> {order.user?.name || 'N/A'}</p>
-              <p><span className="font-medium">Phone:</span> {order.user?.phone || 'N/A'}</p>
-              <p><span className="font-medium">Email:</span> {order.user?.email || 'N/A'}</p>
-            </div>
-          </div>
-
-          <div>
-            <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
-              <MapPin className="w-4 h-4 mr-2 text-green-600" />
-              Delivery Address
-            </h3>
-            <div className="space-y-1 text-sm">
-              {order.deliveryAddress ? (
-                <>
-                  <p>{order.deliveryAddress.street}</p>
-                  {order.deliveryAddress.landmark && <p>{order.deliveryAddress.landmark}</p>}
-                  <p>{order.deliveryAddress.city}, {order.deliveryAddress.state} - {order.deliveryAddress.pincode}</p>
-                </>
-              ) : (
-                <p className="text-gray-500">No delivery address provided</p>
-              )}
-            </div>
-          </div>
+    <div className="border border-gray-200 rounded-xl p-4 bg-white shadow-sm">
+      <div ref={billRef}>
+        <div className="text-center mb-3">
+          <h2 className="text-xl font-bold text-green-700">Saurabh Provision</h2>
+          <p className="text-sm text-gray-500">Owner: Vilas Yeole</p>
+          <p className="text-sm text-gray-500">📞 9766689821</p>
+          <p className="text-xs text-gray-400 mt-1">
+            {new Date(order.createdAt).toLocaleString('en-IN')}
+          </p>
         </div>
 
-        <div className="border-t pt-4">
-          <h3 className="font-semibold text-gray-900 mb-3 flex items-center">
-            <Package className="w-4 h-4 mr-2 text-green-600" />
-            Order Items
-          </h3>
-          <div className="space-y-3">
-            {order.items?.map((item, index) => (
-              <div key={index} className="flex justify-between items-center py-2 border-b last:border-b-0">
-                <div className="flex-1">
-                  <p className="font-medium text-gray-900">{item.name}</p>
-                  <p className="text-sm text-gray-500">
-                    {item.quantity} {item.unit} × ₹{item.price}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="font-semibold text-gray-900">₹{item.price * item.quantity}</p>
-                </div>
-              </div>
-            ))}
+        <div className="border-t border-dashed border-gray-300 my-2" />
+
+        <div className="flex justify-between text-xs text-gray-500 mb-1">
+          <span>Order ID</span>
+          <span className="font-mono font-bold">{order.orderId || order._id?.slice(-6).toUpperCase()}</span>
+        </div>
+
+        <div className="border-t border-dashed border-gray-300 my-2" />
+
+        <div className="flex justify-between text-xs font-bold text-gray-600 mb-1">
+          <span className="w-2/5">Item</span>
+          <span className="w-1/5 text-center">Qty</span>
+          <span className="w-1/5 text-center">Price</span>
+          <span className="w-1/5 text-right">Total</span>
+        </div>
+
+        {order.items?.map((item, i) => (
+          <div key={i} className="flex justify-between text-sm py-1 border-b border-gray-100">
+            <span className="w-2/5 truncate">{item.name}</span>
+            <span className="w-1/5 text-center">{item.qty}</span>
+            <span className="w-1/5 text-center">₹{item.price}</span>
+            <span className="w-1/5 text-right">₹{item.price * item.qty}</span>
+          </div>
+        ))}
+
+        <div className="border-t border-dashed border-gray-300 my-2" />
+
+        <div className="space-y-1 text-sm">
+          <div className="flex justify-between">
+            <span className="text-gray-600">Subtotal</span>
+            <span>₹{subtotal.toFixed(2)}</span>
+          </div>
+          {discount > 0 && (
+            <div className="flex justify-between text-green-600">
+              <span>Discount</span>
+              <span>-₹{discount.toFixed(2)}</span>
+            </div>
+          )}
+          <div className="flex justify-between font-bold text-lg border-t pt-1">
+            <span>TOTAL</span>
+            <span className="text-green-700">₹{total.toFixed(2)}</span>
           </div>
         </div>
 
-        <div className="border-t pt-4">
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Subtotal</span>
-              <span className="font-medium">₹{order.totalAmount}</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Delivery Fee</span>
-              <span className="font-medium">₹0</span>
-            </div>
-            <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Tax</span>
-              <span className="font-medium">₹0</span>
-            </div>
-            <div className="flex justify-between text-lg font-bold pt-2 border-t">
-              <span>Total Amount</span>
-              <span className="text-green-600">₹{order.totalAmount}</span>
-            </div>
+        <div className="border-t border-dashed border-gray-300 my-2" />
+
+        <div className="text-sm space-y-1">
+          <div className="flex justify-between">
+            <span className="text-gray-500">Pickup Time</span>
+            <span className="font-medium">{order.pickupTime}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-gray-500">Payment</span>
+            <span className="font-medium capitalize">{order.paymentMode === 'cash' ? 'Cash on Pickup' : 'Online Paid'}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-gray-500">Status</span>
+            <span className={`font-bold px-2 py-0.5 rounded-full text-xs ${
+              order.status === 'completed' ? 'bg-green-100 text-green-800' :
+              order.status === 'ready' ? 'bg-blue-100 text-blue-800' :
+              'bg-yellow-100 text-yellow-800'
+            }`}>
+              {order.status?.toUpperCase()}
+            </span>
           </div>
         </div>
 
-        <div className="border-t pt-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-            <div className="flex items-center text-gray-600">
-              <Clock className="w-4 h-4 mr-2 text-green-600" />
-              <div>
-                <p className="font-medium">Order Time</p>
-                <p>{formatOrderDate(order.createdAt)}</p>
-              </div>
-            </div>
-            
-            <div className="flex items-center text-gray-600">
-              <IndianRupee className="w-4 h-4 mr-2 text-green-600" />
-              <div>
-                <p className="font-medium">Payment</p>
-                <p>{order.paymentMethod?.charAt(0).toUpperCase() + order.paymentMethod?.slice(1) || 'Cash'}</p>
-              </div>
-            </div>
-            
-            {order.deliveryTime && (
-              <div className="flex items-center text-gray-600">
-                <Clock className="w-4 h-4 mr-2 text-green-600" />
-                <div>
-                  <p className="font-medium">Delivery Time</p>
-                  <p>{order.deliveryTime}</p>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {order.notes && (
-          <div className="border-t pt-4">
-            <h3 className="font-semibold text-gray-900 mb-2">Order Notes</h3>
-            <p className="text-gray-600 text-sm bg-gray-50 p-3 rounded-lg">{order.notes}</p>
-          </div>
-        )}
-
-        <div className="border-t pt-4 text-center">
-          <p className="text-sm text-gray-500 mb-2">Thank you for shopping with us!</p>
-          <div className="flex items-center justify-center space-x-1 text-sm text-gray-600">
-            <Phone className="w-4 h-4" />
-            <span>9766689821</span>
-          </div>
+        <div className="text-center mt-3 text-xs text-gray-400">
+          Thank you for shopping at Saurabh Provision!
         </div>
       </div>
+
+      <button
+        onClick={printBill}
+        className="mt-3 w-full bg-green-600 text-white py-2 rounded-lg text-sm hover:bg-green-700 transition"
+      >
+        🖨️ Print Bill
+      </button>
     </div>
   );
 }

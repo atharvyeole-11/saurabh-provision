@@ -1,85 +1,20 @@
-import { Schema } from 'mongoose';
-
-const orderItemSchema = new Schema({
-  product: {
-    type: Schema.Types.ObjectId,
-    ref: 'Product',
-    required: true,
-  },
-  name: {
-    type: String,
-    required: true,
-  },
-  price: {
-    type: Number,
-    required: true,
-  },
-  quantity: {
-    type: Number,
-    required: true,
-    min: 1,
-  },
-  unit: {
-    type: String,
-    required: true,
-  },
-});
-
-const orderSchema = new Schema({
-  user: {
-    type: Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
-  },
-  items: [orderItemSchema],
-  totalAmount: {
-    type: Number,
-    required: true,
-    min: 0,
-  },
-  status: {
-    type: String,
-    enum: ['pending', 'confirmed', 'preparing', 'ready', 'delivered', 'cancelled'],
-    default: 'pending',
-  },
-  deliveryAddress: {
-    street: String,
-    city: String,
-    state: String,
-    pincode: String,
-    landmark: String,
-  },
-  paymentMethod: {
-    type: String,
-    enum: ['cash', 'online'],
-    default: 'cash',
-  },
-  paymentStatus: {
-    type: String,
-    enum: ['pending', 'paid', 'failed'],
-    default: 'pending',
-  },
-  deliveryTime: {
-    type: String,
-    trim: true,
-  },
-  notes: {
-    type: String,
-    trim: true,
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-  updatedAt: {
-    type: Date,
-    default: Date.now,
-  },
-});
-
-orderSchema.pre('save', function(next) {
-  this.updatedAt = Date.now();
-  next();
-});
-
-export default orderSchema;
+import mongoose from 'mongoose';
+const OrderSchema = new mongoose.Schema({
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  items: [{
+    product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
+    name: String,
+    qty: Number,
+    price: Number,
+    discount: Number
+  }],
+  subtotal: { type: Number, required: true },
+  discountAmount: { type: Number, default: 0 },
+  totalAmount: { type: Number, required: true },
+  paymentMode: { type: String, enum: ['cash', 'online'], default: 'cash' },
+  paymentId: { type: String, default: '' },
+  pickupTime: { type: String, required: true },
+  status: { type: String, enum: ['pending', 'ready', 'completed'], default: 'pending' },
+  orderId: { type: String, unique: true }
+}, { timestamps: true });
+export default mongoose.models.Order || mongoose.model('Order', OrderSchema);
