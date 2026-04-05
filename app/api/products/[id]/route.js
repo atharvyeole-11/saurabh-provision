@@ -5,8 +5,8 @@ import { getUserFromToken } from '@/lib/auth';
 export async function GET(request, { params }) {
   try {
     const { id } = params;
-
-    const { db } = await connectToDatabase();
+    
+    const db = await connectToDatabase();
     
     const product = await db.collection('products')
       .findOne({ _id: id, isActive: true })
@@ -48,6 +48,70 @@ export async function PUT(request, { params }) {
       { _id: id },
       { 
         $set: { 
+          ...updateData,
+          updatedAt: new Date()
+        }
+      }
+    );
+
+    if (result.matchedCount === 0) {
+      return NextResponse.json(
+        { error: 'Product not found' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(
+      { 
+        message: 'Product updated successfully',
+        product: {
+          id,
+          ...updateData
+        }
+      }
+    );
+  } catch (error) {
+    console.error('Update product error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request, { params }) {
+  try {
+    const user = await getUserFromToken();
+    if (!user || user.role !== 'admin') {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      );
+    }
+
+    const { id } = params;
+    const { db } = await connectToDatabase();
+    
+    const result = await db.collection('products').deleteOne({ _id: id });
+
+    if (result.deletedCount === 0) {
+      return NextResponse.json(
+        { error: 'Product not found' },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json(
+      { message: 'Product deleted successfully' }
+    );
+  } catch (error) {
+    console.error('Delete product error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+} 
           ...updateData,
           updatedAt: new Date()
         }

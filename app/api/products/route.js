@@ -1,57 +1,45 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
+import Product from '@/models/Product';
 import { getUserFromToken } from '@/lib/auth';
 
 export async function GET(request) {
   try {
+    const db = await connectToDatabase();
     const { searchParams } = new URL(request.url);
-    const category = searchParams.get('category');
-    const featured = searchParams.get('featured');
-    const search = searchParams.get('search');
-    const page = parseInt(searchParams.get('page')) || 1;
-    const limit = parseInt(searchParams.get('limit')) || 10;
+    const user = await getUserFromToken();
 
-    const { db } = await connectToDatabase();
-    
-    let query = { isActive: true };
-    
-    if (category) {
-      query.category = category;
+    let query = {};
+    let sort = { createdAt: -1 };
+
+    // Handle search
+    if (searchParams.get('search')) {
+      query.name = { $regex: searchParams.get('search'), $options: 'i' };
     }
-    
-    if (featured === 'true') {
+
+    // Handle category filter
+    if (searchParams.get('category')) {
+      query.category = searchParams.get('category');
+    }
+
+    // Handle featured filter
+    if (searchParams.get('featured') === 'true') {
       query.featured = true;
     }
-    
-    if (search) {
-      query.name = { $regex: search, $options: 'i' };
-    }
 
-    const skip = (page - 1) * limit;
+    // Handle limit
+    const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')) : 50;
 
-    const products = await db.collection('products')
-      .find(query)
-      .populate('category', 'name')
-      .sort({ createdAt: -1 })
-      .skip(skip)
+    const products = await Product.find(query)
+      .sort(sort)
       .limit(limit)
-      .toArray();
+      .populate('category');
 
-    const total = await db.collection('products').countDocuments(query);
-
-    return NextResponse.json({
-      products,
-      pagination: {
-        page,
-        limit,
-        total,
-        pages: Math.ceil(total / limit)
-      }
-    });
+    return NextResponse.json({ products });
   } catch (error) {
-    console.error('Get products error:', error);
+    console.error('Error fetching products:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Failed to fetch products' },
       { status: 500 }
     );
   }
@@ -59,7 +47,9 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
+    const db = await connectToDatabase();
     const user = await getUserFromToken();
+
     if (!user || user.role !== 'admin') {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -67,49 +57,15 @@ export async function POST(request) {
       );
     }
 
-    const { name, description, price, category, images, stock, unit, tags } = await request.json();
+    const body = await request.json();
+    const product = new Product(body);
+    await product.save();
 
-    if (!name || !price || !category || !unit) {
-      return NextResponse.json(
-        { error: 'Name, price, category, and unit are required' },
-        { status: 400 }
-      );
-    }
-
-    const { db } = await connectToDatabase();
-    
-    const result = await db.collection('products').insertOne({
-      name,
-      description,
-      price,
-      category,
-      images: images || [],
-      stock: stock || 0,
-      unit,
-      tags: tags || [],
-      isActive: true,
-      featured: false,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
-
-    return NextResponse.json(
-      { 
-        message: 'Product created successfully',
-        product: {
-          id: result.insertedId.toString(),
-          name,
-          price,
-          category,
-          unit
-        }
-      },
-      { status: 201 }
-    );
+    return NextResponse.json({ product }, { status: 201 });
   } catch (error) {
-    console.error('Create product error:', error);
+    console.error('Error creating product:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Failed to create product' },
       { status: 500 }
     );
   }

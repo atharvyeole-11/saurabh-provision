@@ -1,36 +1,29 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
-import Order from '@/models/Order';
 import { getUserFromToken } from '@/lib/auth';
 
 export async function GET(request, { params }) {
   try {
-    const db = await connectToDatabase();
-    const user = await getUserFromToken();
-    
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
     const { id } = params;
-    const order = await Order.findOne({ _id: id, userId: user._id })
-      .populate('items.productId');
+    
+    const db = await connectToDatabase();
+    
+    const product = await db.collection('products')
+      .findOne({ _id: id, isActive: true })
+      .populate('category', 'name');
 
-    if (!order) {
+    if (!product) {
       return NextResponse.json(
-        { error: 'Order not found' },
+        { error: 'Product not found' },
         { status: 404 }
       );
     }
 
-    return NextResponse.json({ order });
+    return NextResponse.json({ product });
   } catch (error) {
-    console.error('Error fetching order:', error);
+    console.error('Get product error:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch order' },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }
@@ -38,9 +31,7 @@ export async function GET(request, { params }) {
 
 export async function PUT(request, { params }) {
   try {
-    const db = await connectToDatabase();
     const user = await getUserFromToken();
-    
     if (!user || user.role !== 'admin') {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -51,24 +42,38 @@ export async function PUT(request, { params }) {
     const { id } = params;
     const updateData = await request.json();
 
-    const order = await Order.findOneAndUpdate(
-      { _id: id, userId: user._id },
-      updateData,
-      { new: true }
+    const { db } = await connectToDatabase();
+    
+    const result = await db.collection('products').updateOne(
+      { _id: id },
+      { 
+        $set: { 
+          ...updateData,
+          updatedAt: new Date()
+        }
+      }
     );
 
-    if (!order) {
+    if (result.matchedCount === 0) {
       return NextResponse.json(
-        { error: 'Order not found' },
+        { error: 'Product not found' },
         { status: 404 }
       );
     }
 
-    return NextResponse.json({ order });
-  } catch (error) {
-    console.error('Error updating order:', error);
     return NextResponse.json(
-      { error: 'Failed to update order' },
+      { 
+        message: 'Product updated successfully',
+        product: {
+          id,
+          ...updateData
+        }
+      }
+    );
+  } catch (error) {
+    console.error('Update product error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }
@@ -76,9 +81,7 @@ export async function PUT(request, { params }) {
 
 export async function DELETE(request, { params }) {
   try {
-    const db = await connectToDatabase();
     const user = await getUserFromToken();
-    
     if (!user || user.role !== 'admin') {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -87,20 +90,24 @@ export async function DELETE(request, { params }) {
     }
 
     const { id } = params;
-    const order = await Order.findOneAndDelete({ _id: id, userId: user._id });
+    const { db } = await connectToDatabase();
+    
+    const result = await db.collection('products').deleteOne({ _id: id });
 
-    if (!order) {
+    if (result.deletedCount === 0) {
       return NextResponse.json(
-        { error: 'Order not found' },
+        { error: 'Product not found' },
         { status: 404 }
       );
     }
 
-    return NextResponse.json({ message: 'Order deleted successfully' });
-  } catch (error) {
-    console.error('Error deleting order:', error);
     return NextResponse.json(
-      { error: 'Failed to delete order' },
+      { message: 'Product deleted successfully' }
+    );
+  } catch (error) {
+    console.error('Delete product error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }

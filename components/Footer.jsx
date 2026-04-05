@@ -3,6 +3,8 @@ import Link from 'next/link';
 import { Phone, Clock, MapPin, Mail, MessageCircle } from 'lucide-react';
 
 export default function Footer() {
+  const mapUrl = "https://www.google.com/maps?q=20.548194047496573,74.52510759792922";
+
   return (
     <footer className="bg-gray-900 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -26,7 +28,18 @@ export default function Footer() {
               </div>
               <div className="flex items-center text-gray-300">
                 <MapPin className="w-5 h-5 mr-3 text-green-400" />
-                <span>Your Local Neighborhood Store</span>
+                <span>Saurabh Provision Store, Pune, Maharashtra</span>
+              </div>
+              <div className="mt-3">
+                <a 
+                  href={mapUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                >
+                  <MapPin className="w-4 h-4" />
+                  Get Directions
+                </a>
               </div>
             </div>
           </div>
@@ -58,49 +71,58 @@ export default function Footer() {
           </div>
 
           <div>
-            <h4 className="text-lg font-semibold mb-4 text-green-400">Connect</h4>
+            <h4 className="text-lg font-semibold mb-4 text-green-400">Contact</h4>
             <ul className="space-y-2">
               <li>
-                <a
-                  href="https://wa.me/919766689821"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center text-gray-300 hover:text-green-400 transition-colors"
+                <a 
+                  href="tel:9766689821" 
+                  className="text-gray-300 hover:text-green-400 transition-colors flex items-center gap-2"
                 >
-                  <MessageCircle className="w-5 h-5 mr-2" />
-                  WhatsApp
-                </a>
-              </li>
-              <li>
-                <a
-                  href="tel:9766689821"
-                  className="flex items-center text-gray-300 hover:text-green-400 transition-colors"
-                >
-                  <Phone className="w-5 h-5 mr-2" />
+                  <Phone className="w-4 h-4" />
                   Call Us
                 </a>
               </li>
               <li>
-                <a
-                  href="mailto:info@saurabhprovision.com"
-                  className="flex items-center text-gray-300 hover:text-green-400 transition-colors"
+                <a 
+                  href="https://wa.me/919766689821" 
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gray-300 hover:text-green-400 transition-colors flex items-center gap-2"
                 >
-                  <Mail className="w-5 h-5 mr-2" />
-                  Email Us
+                  <MessageCircle className="w-4 h-4" />
+                  WhatsApp
+                </a>
+              </li>
+              <li>
+                <a 
+                  href="mailto:info@saurabhprovision.com" 
+                  className="text-gray-300 hover:text-green-400 transition-colors flex items-center gap-2"
+                >
+                  <Mail className="w-4 h-4" />
+                  Email
                 </a>
               </li>
             </ul>
+          </div>
+
+          <div>
+            <h4 className="text-lg font-semibold mb-4 text-green-400">Store Hours</h4>
+            <div className="space-y-1 text-gray-300">
+              <p>Monday - Sunday</p>
+              <p className="font-semibold text-green-400">7:00 AM - 11:00 PM</p>
+              <p className="text-sm text-gray-400 mt-2">Open all days</p>
+            </div>
           </div>
         </div>
 
         <div className="border-t border-gray-800 mt-8 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="text-gray-400 text-sm">
-              © {new Date().getFullYear()} Saurabh Provision. All rights reserved.
-            </div>
-            <div className="text-gray-400 text-sm mt-4 md:mt-0">
-              Owner: Vilas Yeole | Established to serve the community
-            </div>
+            <p className="text-gray-400 text-sm">
+              &copy; 2024 Saurabh Provision. All rights reserved.
+            </p>
+            <p className="text-gray-400 text-sm">
+              Owner: Vilas Yeole
+            </p>
           </div>
         </div>
       </div>

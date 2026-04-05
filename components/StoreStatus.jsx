@@ -14,6 +14,7 @@ export default function StoreStatus() {
       
       setCurrentTime(now);
       
+      // Store is open 7AM-11PM (7:00 - 23:00) Monday-Sunday
       if (currentDay >= 0 && currentDay <= 6) {
         if (currentHour >= 7 && currentHour < 23) {
           setIsOpen(true);
@@ -42,13 +43,19 @@ export default function StoreStatus() {
   const getNextOpenTime = () => {
     const now = new Date();
     const currentHour = now.getHours();
+    const currentDay = now.getDay();
     
-    if (currentHour >= 23) {
-      return 'Tomorrow at 7:00 AM';
-    } else if (currentHour < 7) {
-      return 'Today at 7:00 AM';
+    if (currentDay >= 0 && currentDay <= 6) {
+      if (currentHour >= 23) {
+        return 'Opens tomorrow at 7:00 AM';
+      } else if (currentHour < 7) {
+        return 'Opens today at 7:00 AM';
+      } else {
+        return 'Opens tomorrow at 7:00 AM';
+      }
     } else {
-      return 'Tomorrow at 7:00 AM';
+      // Weekend handling (though store is open all days)
+      return 'Opens Monday at 7:00 AM';
     }
   };
 
@@ -62,12 +69,12 @@ export default function StoreStatus() {
         {isOpen ? (
           <>
             <CheckCircle className="w-4 h-4" />
-            <span>Store Open</span>
+            <span>Open Now</span>
           </>
         ) : (
           <>
             <XCircle className="w-4 h-4" />
-            <span>Store Closed</span>
+            <span>Closed</span>
           </>
         )}
         <Clock className="w-4 h-4" />
@@ -76,7 +83,7 @@ export default function StoreStatus() {
       
       {!isOpen && (
         <div className="ml-2 text-xs opacity-75">
-          Opens {getNextOpenTime()}
+          {getNextOpenTime()}
         </div>
       )}
     </div>

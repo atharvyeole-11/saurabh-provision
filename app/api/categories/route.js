@@ -1,21 +1,22 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
+import Category from '@/models/Category';
 import { getUserFromToken } from '@/lib/auth';
 
-export async function GET(request) {
+export async function GET() {
   try {
-    const { db } = await connectToDatabase();
+    const db = await connectToDatabase();
     
     const categories = await db.collection('categories')
-      .find({ isActive: true })
-      .sort({ displayOrder: 1, name: 1 })
+      .find({})
+      .sort({ name: 1 })
       .toArray();
 
     return NextResponse.json({ categories });
   } catch (error) {
-    console.error('Get categories error:', error);
+    console.error('Error fetching categories:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Failed to fetch categories' },
       { status: 500 }
     );
   }
@@ -23,7 +24,9 @@ export async function GET(request) {
 
 export async function POST(request) {
   try {
+    const db = await connectToDatabase();
     const user = await getUserFromToken();
+
     if (!user || user.role !== 'admin') {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -31,7 +34,7 @@ export async function POST(request) {
       );
     }
 
-    const { name, description, image, displayOrder } = await request.json();
+    const { name } = await request.json();
 
     if (!name) {
       return NextResponse.json(
@@ -40,36 +43,26 @@ export async function POST(request) {
       );
     }
 
-    const { db } = await connectToDatabase();
-    
     const existingCategory = await db.collection('categories').findOne({ name });
     if (existingCategory) {
       return NextResponse.json(
-        { error: 'Category already exists with this name' },
-        { status: 409 }
+        { error: 'Category with this name already exists' },
+        { status: 400 }
       );
     }
 
     const result = await db.collection('categories').insertOne({
       name,
-      description,
-      image,
-      displayOrder: displayOrder || 0,
-      isActive: true,
       createdAt: new Date(),
-      updatedAt: new Date(),
+      updatedAt: new Date()
     });
 
-    return NextResponse.json(
-      { 
-        message: 'Category created successfully',
-        category: {
-          id: result.insertedId.toString(),
-          name,
-          displayOrder: displayOrder || 0
-        }
-      },
-      { status: 201 }
+    return NextResponse.json({
+      category: {
+        _id: result.insertedId,
+        name
+      }
+    }, { status: 201 });
     );
   } catch (error) {
     console.error('Create category error:', error);

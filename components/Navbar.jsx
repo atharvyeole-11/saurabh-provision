@@ -45,46 +45,59 @@ export default function Navbar() {
           </div>
 
           <div className="hidden md:flex items-center space-x-4">
+            <a 
+              href="https://www.google.com/maps?q=20.548194047496573,74.52510759792922" 
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center text-sm text-gray-600 hover:text-green-600 transition-colors bg-gray-100 px-3 py-1 rounded-full"
+            >
+              📍 Pune, MH
+            </a>
             <div className="flex items-center text-sm text-gray-600">
               <Phone className="w-4 h-4 mr-1" />
               9766689821
             </div>
-            <div className="flex items-center text-sm text-gray-600">
-              <Clock className="w-4 h-4 mr-1" />
-              7AM-11PM
-            </div>
-            
-            <Link href="/cart" className="relative p-2 text-gray-700 hover:text-green-600 transition-colors">
-              <ShoppingCart className="w-6 h-6" />
+            <Link href="/cart" className="relative">
+              <ShoppingCart className="w-6 h-6 text-gray-600 hover:text-green-600 transition-colors" />
               {getCartCount() > 0 && (
-                <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                <span className="absolute -top-2 -right-2 bg-green-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                   {getCartCount()}
                 </span>
               )}
             </Link>
-
             {user ? (
-              <div className="flex items-center space-x-2">
-                <span className="text-gray-700">Hi, {user.name}</span>
-                <button
-                  onClick={handleLogout}
-                  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-                >
-                  Logout
-                </button>
+              <div className="flex items-center gap-3">
+                <Link href="/orders" className="text-gray-600 hover:text-green-600 transition-colors">
+                  Orders
+                </Link>
+                <div className="relative group">
+                  <button className="flex items-center text-gray-600 hover:text-green-600 transition-colors">
+                    <User className="w-6 h-6" />
+                  </button>
+                  <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50">
+                    <div className="py-2">
+                      <div className="px-4 py-2 text-sm text-gray-700 border-b border-gray-100">
+                        {user.name}
+                      </div>
+                      <Link href="/profile" className="block px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">
+                        Profile
+                      </Link>
+                      <button
+                        onClick={handleLogout}
+                        className="w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-gray-50"
+                      >
+                        Logout
+                      </button>
+                    </div>
+                  </div>
+                </div>
               </div>
             ) : (
-              <div className="flex items-center space-x-2">
-                <Link
-                  href="/login"
-                  className="text-gray-700 hover:text-green-600 transition-colors"
-                >
+              <div className="flex items-center gap-4">
+                <Link href="/login" className="text-gray-600 hover:text-green-600 transition-colors">
                   Login
                 </Link>
-                <Link
-                  href="/signup"
-                  className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-                >
+                <Link href="/signup" className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
                   Sign Up
                 </Link>
               </div>

@@ -3,7 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
 import { useCart } from '@/context/CartContext';
-import { ShoppingCart, Plus, Minus, Star } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, Star, Tag, Package } from 'lucide-react';
 
 export default function ProductCard({ product }) {
   const [quantity, setQuantity] = useState(1);
@@ -36,8 +36,35 @@ export default function ProductCard({ product }) {
     }
   };
 
+  const isOutOfStock = product.stock <= 0;
+  const hasDiscount = product.discount && product.discount > 0;
+  const discountedPrice = hasDiscount ? product.price * (1 - product.discount / 100) : product.price;
+
   return (
-    <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300 overflow-hidden">
+    <div className="bg-white rounded-lg shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden group">
+      {/* Discount Badge */}
+      {hasDiscount && (
+        <div className="absolute top-2 left-2 z-10 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-semibold flex items-center">
+          <Tag className="w-3 h-3 mr-1" />
+          {product.discount}% OFF
+        </div>
+      )}
+
+      {/* Stock Badge */}
+      <div className="absolute top-2 right-2 z-10">
+        {isOutOfStock ? (
+          <span className="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-semibold flex items-center">
+            <Package className="w-3 h-3 mr-1" />
+            OUT OF STOCK
+          </span>
+        ) : (
+          <span className="bg-green-500 text-white px-2 py-1 rounded-full text-xs font-semibold flex items-center">
+            <Package className="w-3 h-3 mr-1" />
+            IN STOCK
+          </span>
+        )}
+      </div>
+
       <Link href={`/products/${product._id}`}>
         <div className="relative h-48 w-full">
           {product.images && product.images.length > 0 ? (
@@ -45,28 +72,11 @@ export default function ProductCard({ product }) {
               src={product.images[0]}
               alt={product.name}
               fill
-              className="object-cover"
+              className="object-cover group-hover:scale-105 transition-transform duration-300"
             />
           ) : (
-            <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-              <span className="text-gray-400">No Image</span>
-            </div>
-          )}
-          {product.featured && (
-            <div className="absolute top-2 left-2 bg-orange-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
-              Featured
-            </div>
-          )}
-          {product.stock <= 5 && product.stock > 0 && (
-            <div className="absolute top-2 right-2 bg-red-500 text-white px-2 py-1 rounded-full text-xs font-semibold">
-              Low Stock
-            </div>
-          )}
-          {product.stock === 0 && (
-            <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-              <span className="bg-red-500 text-white px-3 py-1 rounded-full text-sm font-semibold">
-                Out of Stock
-              </span>
+            <div className="w-full h-full bg-gray-200 rounded-lg flex items-center justify-center">
+              <span className="text-gray-400 text-sm">No Image</span>
             </div>
           )}
         </div>
@@ -74,94 +84,98 @@ export default function ProductCard({ product }) {
 
       <div className="p-4">
         <Link href={`/products/${product._id}`}>
-          <h3 className="font-semibold text-gray-800 hover:text-green-600 transition-colors line-clamp-2">
+          <h3 className="font-semibold text-gray-900 mb-2 group-hover:text-green-600 transition-colors line-clamp-2">
             {product.name}
           </h3>
         </Link>
 
-        <div className="flex items-center mt-1">
-          <div className="flex text-yellow-400">
-            {[1, 2, 3, 4, 5].map((star) => (
-              <Star
-                key={star}
-                className={`w-4 h-4 ${star <= 4 ? 'fill-current' : ''}`}
-              />
-            ))}
-          </div>
-          <span className="text-gray-500 text-sm ml-1">(4.0)</span>
-        </div>
-
-        <p className="text-gray-600 text-sm mt-2 line-clamp-2">
-          {product.description}
-        </p>
-
-        <div className="mt-3 flex items-center justify-between">
-          <div>
-            <span className="text-2xl font-bold text-green-600">
-              ₹{product.price}
-            </span>
-            <span className="text-gray-500 text-sm ml-1">/{product.unit}</span>
-          </div>
-          <div className="text-sm text-gray-500">
-            Stock: {product.stock}
-          </div>
-        </div>
-
-        <div className="mt-4">
-          {inCart ? (
-            <div className="flex items-center space-x-2">
-              <button
-                onClick={() => handleUpdateCartQuantity(currentQuantity - 1)}
-                className="bg-gray-200 hover:bg-gray-300 text-gray-700 p-2 rounded-lg transition-colors"
-              >
-                <Minus className="w-4 h-4" />
-              </button>
-              <span className="font-semibold text-gray-700 min-w-[3rem] text-center">
-                {currentQuantity}
+        {/* Price and Discount */}
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            {hasDiscount && (
+              <span className="text-gray-500 line-through text-sm">
+                ₹{product.price}
               </span>
-              <button
-                onClick={() => handleUpdateCartQuantity(currentQuantity + 1)}
-                className="bg-gray-200 hover:bg-gray-300 text-gray-700 p-2 rounded-lg transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-              </button>
-              <div className="flex-1 text-right">
-                <span className="text-sm text-gray-500">Total: </span>
-                <span className="font-semibold text-green-600">
-                  ₹{product.price * currentQuantity}
-                </span>
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-center space-x-2">
-              <div className="flex items-center border rounded-lg">
+            )}
+            <span className="text-lg font-bold text-green-600">
+              ₹{discountedPrice.toFixed(2)}
+            </span>
+          </div>
+          <span className="text-sm text-gray-500">
+            {product.unit}
+          </span>
+        </div>
+
+        {/* Expiry Date */}
+        {product.expiryDate && (
+          <div className="text-xs text-gray-500 mb-3">
+            Expires: {new Date(product.expiryDate).toLocaleDateString('en-IN')}
+          </div>
+        )}
+
+        {/* Cart Controls */}
+        {inCart ? (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => handleUpdateCartQuantity(currentQuantity - 1)}
+              className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              disabled={currentQuantity <= 1}
+            >
+              <Minus className="w-4 h-4" />
+            </button>
+            <span className="flex-1 text-center font-medium">
+              {currentQuantity}
+            </span>
+            <button
+              onClick={() => handleUpdateCartQuantity(currentQuantity + 1)}
+              className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              disabled={isOutOfStock}
+            >
+              <Plus className="w-4 h-4" />
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            {!isOutOfStock && (
+              <>
                 <button
                   onClick={handleDecreaseQuantity}
-                  className="bg-gray-100 hover:bg-gray-200 text-gray-700 p-2 rounded-l-lg transition-colors"
+                  className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                  disabled={quantity <= 1}
                 >
                   <Minus className="w-4 h-4" />
                 </button>
-                <span className="font-semibold text-gray-700 min-w-[3rem] text-center">
-                  {quantity}
-                </span>
+                <input
+                  type="number"
+                  min="1"
+                  max={product.stock}
+                  value={quantity}
+                  onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+                  className="w-16 text-center border border-gray-300 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-green-500"
+                />
                 <button
                   onClick={handleIncreaseQuantity}
-                  className="bg-gray-100 hover:bg-gray-200 text-gray-700 p-2 rounded-r-lg transition-colors"
+                  className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                  disabled={quantity >= product.stock}
                 >
                   <Plus className="w-4 h-4" />
                 </button>
-              </div>
-              <button
-                onClick={handleAddToCart}
-                disabled={product.stock === 0}
-                className="flex-1 bg-green-600 hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white px-4 py-2 rounded-lg transition-colors flex items-center justify-center space-x-2"
-              >
-                <ShoppingCart className="w-4 h-4" />
-                <span>Add to Cart</span>
-              </button>
-            </div>
-          )}
-        </div>
+              </>
+            )}
+            <button
+              onClick={handleAddToCart}
+              disabled={isOutOfStock}
+              className={`flex-1 py-2 rounded-lg font-medium transition-colors flex items-center justify-center gap-2 ${
+                isOutOfStock 
+                  ? 'bg-gray-300 text-gray-500 cursor-not-allowed' 
+                  : 'bg-green-600 text-white hover:bg-green-700'
+              }`}
+            >
+              <ShoppingCart className="w-4 h-4" />
+              {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

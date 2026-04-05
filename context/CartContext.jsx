@@ -6,9 +6,11 @@ const CartContext = createContext();
 export function CartProvider({ children }) {
   const [cart, setCart] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedPickupTime, setSelectedPickupTime] = useState('');
 
   useEffect(() => {
     loadCart();
+    loadPickupTime();
   }, []);
 
   const loadCart = () => {
@@ -21,6 +23,17 @@ export function CartProvider({ children }) {
       console.error('Failed to load cart:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadPickupTime = () => {
+    try {
+      const savedPickupTime = localStorage.getItem('selectedPickupTime');
+      if (savedPickupTime) {
+        setSelectedPickupTime(savedPickupTime);
+      }
+    } catch (error) {
+      console.error('Failed to load pickup time:', error);
     }
   };
 
@@ -48,8 +61,9 @@ export function CartProvider({ children }) {
           productId: product._id,
           name: product.name,
           price: product.price,
+          discount: product.discount,
           unit: product.unit,
-          image: product.images?.[0] || '',
+          image: product.images?.[0],
           quantity
         }];
       }
@@ -89,20 +103,29 @@ export function CartProvider({ children }) {
     localStorage.removeItem('cart');
   };
 
-  const getCartTotal = () => {
-    return cart.reduce((total, item) => total + (item.price * item.quantity), 0);
-  };
-
-  const getCartCount = () => {
-    return cart.reduce((total, item) => total + item.quantity, 0);
-  };
-
   const isInCart = (productId) => {
     return cart.some(item => item.productId === productId);
   };
 
   const getCartItem = (productId) => {
     return cart.find(item => item.productId === productId);
+  };
+
+  const getCartTotal = () => {
+    return cart.reduce((total, item) => {
+      const hasDiscount = item.discount && item.discount > 0;
+      const price = hasDiscount ? item.price * (1 - item.discount / 100) : item.price;
+      return total + (price * item.quantity);
+    }, 0).toFixed(2);
+  };
+
+  const getCartCount = () => {
+    return cart.reduce((count, item) => count + item.quantity, 0);
+  };
+
+  const setPickupTime = (time) => {
+    setSelectedPickupTime(time);
+    localStorage.setItem('selectedPickupTime', time);
   };
 
   const value = {
@@ -112,10 +135,12 @@ export function CartProvider({ children }) {
     removeFromCart,
     updateQuantity,
     clearCart,
-    getCartTotal,
-    getCartCount,
     isInCart,
     getCartItem,
+    getCartTotal,
+    getCartCount,
+    selectedPickupTime,
+    setPickupTime
   };
 
   return (

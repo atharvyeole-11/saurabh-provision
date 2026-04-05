@@ -24,6 +24,24 @@ export default function ChatButton() {
 
   return (
     <>
+      {/* Floating Chat Button */}
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="fixed bottom-6 right-6 bg-green-600 hover:bg-green-700 text-white p-4 rounded-full shadow-lg transition-all duration-300 z-40 group animate-pulse"
+      >
+        {isOpen ? (
+          <X className="w-6 h-6" />
+        ) : (
+          <>
+            <MessageCircle className="w-6 h-6" />
+            <span className="absolute right-full mr-3 bg-gray-800 text-white px-3 py-1 rounded-lg text-sm whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
+              Chat with Owner
+            </span>
+          </>
+        )}
+      </button>
+
+      {/* Chat Window */}
       {isOpen && (
         <div className="fixed bottom-24 right-6 w-80 bg-white rounded-lg shadow-2xl z-50 border border-gray-200">
           <div className="bg-green-600 text-white p-4 rounded-t-lg flex items-center justify-between">
@@ -71,22 +89,6 @@ export default function ChatButton() {
           </div>
         </div>
       )}
-
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-6 right-6 bg-green-600 hover:bg-green-700 text-white p-4 rounded-full shadow-lg transition-all duration-300 z-40 group"
-      >
-        {isOpen ? (
-          <X className="w-6 h-6" />
-        ) : (
-          <>
-            <MessageCircle className="w-6 h-6" />
-            <span className="absolute right-full mr-3 bg-gray-800 text-white px-3 py-1 rounded-lg text-sm whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
-              Chat with us on WhatsApp
-            </span>
-          </>
-        )}
-      </button>
     </>
   );
 }

@@ -1,10 +1,13 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
+import Order from '@/models/Order';
 import { getUserFromToken } from '@/lib/auth';
 
 export async function GET(request) {
   try {
+    const db = await connectToDatabase();
     const user = await getUserFromToken();
+    
     if (!user) {
       return NextResponse.json(
         { error: 'Unauthorized' },
@@ -13,44 +16,22 @@ export async function GET(request) {
     }
 
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page')) || 1;
-    const limit = parseInt(searchParams.get('limit')) || 10;
-    const status = searchParams.get('status');
+    let query = { userId: user._id };
 
-    const { db } = await connectToDatabase();
-    
-    let query = { user: user.userId };
-    
-    if (status) {
-      query.status = status;
+    // Handle status filter
+    if (searchParams.get('status')) {
+      query.status = searchParams.get('status');
     }
 
-    const skip = (page - 1) * limit;
-
-    const orders = await db.collection('orders')
-      .find(query)
-      .populate('user', 'name email phone')
-      .populate('items.product', 'name images')
+    const orders = await Order.find(query)
       .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .toArray();
+      .populate('items.productId');
 
-    const total = await db.collection('orders').countDocuments(query);
-
-    return NextResponse.json({
-      orders,
-      pagination: {
-        page,
-        limit,
-        total,
-        pages: Math.ceil(total / limit)
-      }
-    });
+    return NextResponse.json({ orders });
   } catch (error) {
-    console.error('Get orders error:', error);
+    console.error('Error fetching orders:', error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Failed to fetch orders' },
       { status: 500 }
     );
   }
