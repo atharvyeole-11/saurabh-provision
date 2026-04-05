@@ -1,183 +1,39 @@
-import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
-import { getUserFromToken } from '@/lib/auth';
+import Product from '@/models/Product';
+import { NextResponse } from 'next/server';
 
-export async function GET(request, { params }) {
+export async function GET(req, { params }) {
   try {
-    const { id } = params;
-    
-    const db = await connectToDatabase();
-    
-    const product = await db.collection('products')
-      .findOne({ _id: id, isActive: true })
-      .populate('category', 'name');
-
-    if (!product) {
-      return NextResponse.json(
-        { error: 'Product not found' },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json({ product });
+    await connectToDatabase();
+    const product = await Product.findById(params.id);
+    if (!product) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    return NextResponse.json(product);
   } catch (error) {
-    console.error('Get product error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 
-export async function PUT(request, { params }) {
+export async function PUT(req, { params }) {
   try {
-    const user = await getUserFromToken();
-    if (!user || user.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    const { id } = params;
-    const updateData = await request.json();
-
-    const { db } = await connectToDatabase();
-    
-    const result = await db.collection('products').updateOne(
-      { _id: id },
-      { 
-        $set: { 
-          ...updateData,
-          updatedAt: new Date()
-        }
-      }
+    await connectToDatabase();
+    const body = await req.json();
+    const product = await Product.findByIdAndUpdate(
+      params.id, 
+      body, 
+      { new: true }
     );
-
-    if (result.matchedCount === 0) {
-      return NextResponse.json(
-        { error: 'Product not found' },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json(
-      { 
-        message: 'Product updated successfully',
-        product: {
-          id,
-          ...updateData
-        }
-      }
-    );
+    return NextResponse.json(product);
   } catch (error) {
-    console.error('Update product error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
 
-export async function DELETE(request, { params }) {
+export async function DELETE(req, { params }) {
   try {
-    const user = await getUserFromToken();
-    if (!user || user.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    const { id } = params;
-    const { db } = await connectToDatabase();
-    
-    const result = await db.collection('products').deleteOne({ _id: id });
-
-    if (result.deletedCount === 0) {
-      return NextResponse.json(
-        { error: 'Product not found' },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json(
-      { message: 'Product deleted successfully' }
-    );
+    await connectToDatabase();
+    await Product.findByIdAndDelete(params.id);
+    return NextResponse.json({ message: 'Product deleted successfully' });
   } catch (error) {
-    console.error('Delete product error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
-  }
-} 
-          ...updateData,
-          updatedAt: new Date()
-        }
-      }
-    );
-
-    if (result.matchedCount === 0) {
-      return NextResponse.json(
-        { error: 'Product not found' },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json(
-      { message: 'Product updated successfully' },
-      { status: 200 }
-    );
-  } catch (error) {
-    console.error('Update product error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
-  }
-}
-
-export async function DELETE(request, { params }) {
-  try {
-    const user = await getUserFromToken();
-    if (!user || user.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
-    }
-
-    const { id } = params;
-
-    const { db } = await connectToDatabase();
-    
-    const result = await db.collection('products').updateOne(
-      { _id: id },
-      { 
-        $set: { 
-          isActive: false,
-          updatedAt: new Date()
-        }
-      }
-    );
-
-    if (result.matchedCount === 0) {
-      return NextResponse.json(
-        { error: 'Product not found' },
-        { status: 404 }
-      );
-    }
-
-    return NextResponse.json(
-      { message: 'Product deleted successfully' },
-      { status: 200 }
-    );
-  } catch (error) {
-    console.error('Delete product error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
