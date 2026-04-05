@@ -4,7 +4,7 @@ import { useSearchParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
-import { Search, Filter, Grid, List, SlidersHorizontal, X } from 'lucide-react';
+import { Search, Filter, Grid, List, X } from 'lucide-react';
 
 export default function Products() {
   const searchParams = useSearchParams();
@@ -146,7 +146,7 @@ export default function Products() {
                 onClick={() => setShowFilters(!showFilters)}
                 className="lg:hidden flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
               >
-                <SlidersHorizontal className="w-5 h-5" />
+                <Filter className="w-5 h-5" />
                 <span>Filters</span>
               </button>
             </div>
