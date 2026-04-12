@@ -4,7 +4,7 @@ import { useSearchParams } from 'next/navigation';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import ProductCard from '@/components/ProductCard';
-import { Search, Filter, Grid, List, X } from 'lucide-react';
+import { Search, Filter, Grid, List, X, MapPin } from 'lucide-react';
 
 function ProductsContent() {
   const searchParams = useSearchParams();
@@ -99,7 +99,15 @@ function ProductsContent() {
       
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-4">All Products</h1>
+          <div className="flex items-center gap-3 mb-4">
+            <h1 className="text-3xl font-bold text-gray-900">All Products</h1>
+            <div className="flex items-center bg-green-50 px-3 py-1 rounded-full border border-green-200">
+              <MapPin className="w-4 h-4 mr-1 text-green-600" />
+              <span className="text-sm text-green-700 font-medium">Malegaon</span>
+            </div>
+          </div>
+          
+          <p className="text-gray-600 mb-6">Fresh groceries and stationary items available for pickup in Malegaon</p>
           
           <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
             <form onSubmit={handleSearch} className="flex-1 max-w-md">

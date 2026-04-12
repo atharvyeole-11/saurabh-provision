@@ -15,7 +15,13 @@ import {
   DollarSign,
   ArrowRight,
   Menu,
-  X
+  X,
+  AlertTriangle,
+  CheckCircle,
+  XCircle,
+  Eye,
+  Edit,
+  Trash2
 } from 'lucide-react';
 
 export default function AdminDashboard() {
@@ -27,8 +33,12 @@ export default function AdminDashboard() {
     totalProducts: 0,
     totalUsers: 0,
     totalRevenue: 0,
+    todayOrders: 0,
+    pendingOrders: 0,
+    completedOrders: 0,
     recentOrders: [],
-    lowStockProducts: []
+    lowStockProducts: [],
+    topProducts: []
   });
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
@@ -49,46 +59,71 @@ export default function AdminDashboard() {
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
-      const [ordersRes, productsRes, usersRes] = await Promise.all([
+      const [
+        ordersRes,
+        productsRes,
+        usersRes,
+        recentOrdersRes,
+        lowStockRes
+      ] = await Promise.all([
         fetch('/api/orders'),
         fetch('/api/products'),
-        fetch('/api/users')
+        fetch('/api/users'),
+        fetch('/api/orders?limit=5&sort=createdAt'),
+        fetch('/api/products?lowStock=true&limit=5')
       ]);
 
-      if (ordersRes.ok) {
-        const ordersData = await ordersRes.json();
-        const orders = ordersData.orders || [];
-        
-        const totalRevenue = orders.reduce((sum, order) => sum + order.totalAmount, 0);
-        const recentOrders = orders.slice(0, 5);
+      const orders = ordersRes.ok ? await ordersRes.json() : [];
+      const products = productsRes.ok ? await productsRes.json() : [];
+      const users = usersRes.ok ? await usersRes.json() : [];
+      const recentOrders = recentOrdersRes.ok ? await recentOrdersRes.json() : [];
+      const lowStockProducts = lowStockRes.ok ? await lowStockRes.json() : [];
 
-        setStats(prev => ({
-          ...prev,
-          totalOrders: orders.length,
-          totalRevenue,
-          recentOrders
-        }));
-      }
+      const today = new Date().toDateString();
+      const todayOrders = orders.filter(order => 
+        new Date(order.createdAt).toDateString() === today
+      );
 
-      if (productsRes.ok) {
-        const productsData = await productsRes.json();
-        const products = productsData.products || [];
-        const lowStock = products.filter(p => p.stock <= 5 && p.stock > 0);
+      const pendingOrders = orders.filter(order => order.status === 'pending');
+      const completedOrders = orders.filter(order => order.status === 'completed');
 
-        setStats(prev => ({
-          ...prev,
-          totalProducts: products.length,
-          lowStockProducts: lowStock
-        }));
-      }
+      const totalRevenue = orders
+        .filter(order => order.status === 'completed')
+        .reduce((sum, order) => sum + (order.totalAmount || 0), 0);
 
-      if (usersRes.ok) {
-        const usersData = await usersRes.json();
-        setStats(prev => ({
-          ...prev,
-          totalUsers: usersData.users?.length || 0
-        }));
-      }
+      // Calculate top products
+      const productSales = {};
+      orders.forEach(order => {
+        order.items?.forEach(item => {
+          const productId = item.product || item.productId;
+          productSales[productId] = (productSales[productId] || 0) + (item.quantity || item.qty || 1);
+        });
+      });
+
+      const topProducts = Object.entries(productSales)
+        .sort(([,a], [,b]) => b - a)
+        .slice(0, 5)
+        .map(([productId, sales]) => {
+          const product = products.find(p => p._id === productId);
+          return {
+            name: product?.name || 'Unknown Product',
+            sales,
+            stock: product?.stock || 0
+          };
+        });
+
+      setStats({
+        totalOrders: orders.length,
+        totalProducts: products.length,
+        totalUsers: users.length,
+        totalRevenue,
+        todayOrders: todayOrders.length,
+        pendingOrders: pendingOrders.length,
+        completedOrders: completedOrders.length,
+        recentOrders,
+        lowStockProducts,
+        topProducts
+      });
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);
     } finally {
@@ -98,21 +133,69 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <Navbar />
-        <div className="flex items-center justify-center h-96">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
-        </div>
-        <Footer />
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
       </div>
     );
   }
 
-  const menuItems = [
-    { href: '/admin', label: 'Dashboard', icon: BarChart3, active: true },
-    { href: '/admin/products', label: 'Products', icon: Package },
-    { href: '/admin/orders', label: 'Orders', icon: ShoppingCart },
-    { href: '/admin/users', label: 'Users', icon: Users },
+  const statCards = [
+    {
+      title: 'Total Orders',
+      value: stats.totalOrders,
+      change: stats.todayOrders,
+      changeLabel: 'today',
+      icon: <ShoppingCart className="w-6 h-6" />,
+      color: 'blue'
+    },
+    {
+      title: 'Total Products',
+      value: stats.totalProducts,
+      change: stats.lowStockProducts.length,
+      changeLabel: 'low stock',
+      icon: <Package className="w-6 h-6" />,
+      color: 'green'
+    },
+    {
+      title: 'Total Users',
+      value: stats.totalUsers,
+      change: '+12%',
+      changeLabel: 'growth',
+      icon: <Users className="w-6 h-6" />,
+      color: 'purple'
+    },
+    {
+      title: 'Revenue',
+      value: `$${stats.totalRevenue.toFixed(0)}`,
+      change: '+8%',
+      changeLabel: 'this month',
+      icon: <DollarSign className="w-6 h-6" />,
+      color: 'orange'
+    }
+  ];
+
+  const orderStatusCards = [
+    {
+      title: 'Pending',
+      value: stats.pendingOrders,
+      icon: <Clock className="w-5 h-5" />,
+      color: 'yellow',
+      href: '/admin/orders?status=pending'
+    },
+    {
+      title: 'Ready',
+      value: stats.totalOrders - stats.pendingOrders - stats.completedOrders,
+      icon: <Eye className="w-5 h-5" />,
+      color: 'blue',
+      href: '/admin/orders?status=ready'
+    },
+    {
+      title: 'Completed',
+      value: stats.completedOrders,
+      icon: <CheckCircle className="w-5 h-5" />,
+      color: 'green',
+      href: '/admin/orders?status=completed'
+    }
   ];
 
   return (
@@ -121,201 +204,188 @@ export default function AdminDashboard() {
       
       <div className="flex">
         {/* Sidebar */}
-        <aside className={`${sidebarOpen ? 'block' : 'hidden'} lg:block w-64 bg-white shadow-sm min-h-screen`}>
-          <div className="p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-6">Admin Panel</h2>
-            <nav className="space-y-2">
-              {menuItems.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={`flex items-center space-x-3 px-4 py-3 rounded-lg transition-colors ${
-                    item.active
-                      ? 'bg-green-50 text-green-600 border-l-4 border-green-600'
-                      : 'text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  <item.icon className="w-5 h-5" />
-                  <span>{item.label}</span>
-                </Link>
-              ))}
-            </nav>
-          </div>
-        </aside>
-
-        {/* Main Content */}
-        <main className="flex-1 p-6">
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
-              <p className="text-gray-600 mt-1">Welcome back, {user?.name}</p>
-            </div>
-            
+        <div className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0`}>
+          <div className="flex items-center justify-between p-4 border-b">
+            <h2 className="text-lg font-semibold text-gray-900">Admin Panel</h2>
             <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
+              onClick={() => setSidebarOpen(false)}
               className="lg:hidden p-2 rounded-lg hover:bg-gray-100"
             >
-              {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              <X className="w-5 h-5" />
             </button>
           </div>
+          
+          <nav className="p-4 space-y-2">
+            <Link href="/admin" className="flex items-center gap-3 p-3 rounded-lg bg-green-100 text-green-700">
+              <BarChart3 className="w-5 h-5" />
+              Dashboard
+            </Link>
+            <Link href="/admin/products" className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100">
+              <Package className="w-5 h-5" />
+              Products
+            </Link>
+            <Link href="/admin/orders" className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100">
+              <ShoppingCart className="w-5 h-5" />
+              Orders
+            </Link>
+            <Link href="/admin/users" className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100">
+              <Users className="w-5 h-5" />
+              Users
+            </Link>
+            <Link href="/admin/promotions" className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100">
+              <TrendingUp className="w-5 h-5" />
+              Promotions
+            </Link>
+          </nav>
+        </div>
 
-          {/* Stats Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Total Orders</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">{stats.totalOrders}</p>
-                </div>
-                <div className="bg-blue-100 p-3 rounded-lg">
-                  <ShoppingCart className="w-6 h-6 text-blue-600" />
-                </div>
+        {/* Mobile Sidebar Overlay */}
+        {sidebarOpen && (
+          <div 
+            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+
+        {/* Main Content */}
+        <div className="flex-1 lg:ml-0">
+          <div className="p-4 lg:p-8">
+            {/* Header */}
+            <div className="flex items-center justify-between mb-8">
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+                <p className="text-gray-600">Welcome back, {user?.name}</p>
               </div>
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="lg:hidden p-2 rounded-lg hover:bg-gray-100"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
             </div>
 
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Total Products</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">{stats.totalProducts}</p>
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              {statCards.map((card, index) => (
+                <div key={index} className="bg-white rounded-lg shadow-sm p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <div className={`p-3 rounded-lg bg-${card.color}-100 text-${card.color}-600`}>
+                      {card.icon}
+                    </div>
+                    <div className="text-right">
+                      <p className="text-sm text-gray-500">{card.changeLabel}</p>
+                      <p className="text-sm font-semibold text-green-600">{card.change}</p>
+                    </div>
+                  </div>
+                  <h3 className="text-2xl font-bold text-gray-900">{card.value}</h3>
+                  <p className="text-sm text-gray-600 mt-1">{card.title}</p>
                 </div>
-                <div className="bg-green-100 p-3 rounded-lg">
-                  <Package className="w-6 h-6 text-green-600" />
-                </div>
-              </div>
+              ))}
             </div>
 
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Total Users</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">{stats.totalUsers}</p>
-                </div>
-                <div className="bg-purple-100 p-3 rounded-lg">
-                  <Users className="w-6 h-6 text-purple-600" />
-                </div>
-              </div>
+            {/* Order Status */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+              {orderStatusCards.map((card, index) => (
+                <Link key={index} href={card.href} className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">{card.title}</h3>
+                      <p className="text-2xl font-bold text-gray-900 mt-1">{card.value}</p>
+                    </div>
+                    <div className={`p-3 rounded-full bg-${card.color}-100 text-${card.color}-600`}>
+                      {card.icon}
+                    </div>
+                  </div>
+                </Link>
+              ))}
             </div>
 
-            <div className="bg-white rounded-lg shadow-sm p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600">Total Revenue</p>
-                  <p className="text-2xl font-bold text-gray-900 mt-1">₹{stats.totalRevenue}</p>
-                </div>
-                <div className="bg-orange-100 p-3 rounded-lg">
-                  <DollarSign className="w-6 h-6 text-orange-600" />
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Recent Orders */}
-            <div className="bg-white rounded-lg shadow-sm">
-              <div className="p-6 border-b border-gray-200">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-gray-900">Recent Orders</h2>
-                  <Link
-                    href="/admin/orders"
-                    className="text-green-600 hover:text-green-700 text-sm font-medium flex items-center"
-                  >
-                    View All <ArrowRight className="w-4 h-4 ml-1" />
+            {/* Recent Orders & Low Stock */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Recent Orders */}
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900">Recent Orders</h3>
+                  <Link href="/admin/orders" className="text-green-600 hover:text-green-700 text-sm">
+                    View all
                   </Link>
                 </div>
-              </div>
-              <div className="p-6">
-                {stats.recentOrders.length === 0 ? (
-                  <p className="text-gray-500 text-center py-4">No recent orders</p>
-                ) : (
-                  <div className="space-y-4">
-                    {stats.recentOrders.map((order) => (
-                      <div key={order._id} className="flex items-center justify-between py-3 border-b last:border-b-0">
-                        <div>
-                          <p className="font-medium text-gray-900">#{order._id.slice(-8)}</p>
-                          <p className="text-sm text-gray-600">
-                            {new Date(order.createdAt).toLocaleDateString('en-IN')}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-semibold text-green-600">₹{order.totalAmount}</p>
-                          <p className="text-sm text-gray-600">{order.status}</p>
-                        </div>
+                <div className="space-y-3">
+                  {stats.recentOrders.slice(0, 5).map((order) => (
+                    <div key={order._id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div>
+                        <p className="font-medium text-gray-900">#{order.orderId || order._id?.slice(-6)}</p>
+                        <p className="text-sm text-gray-500">{order.user?.name || 'Unknown'}</p>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Low Stock Alert */}
-            <div className="bg-white rounded-lg shadow-sm">
-              <div className="p-6 border-b border-gray-200">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-gray-900">Low Stock Alert</h2>
-                  <Link
-                    href="/admin/products"
-                    className="text-green-600 hover:text-green-700 text-sm font-medium flex items-center"
-                  >
-                    Manage <ArrowRight className="w-4 h-4 ml-1" />
-                  </Link>
+                      <div className="text-right">
+                        <p className="font-semibold text-green-600">${order.totalAmount || 0}</p>
+                        <span className={`text-xs px-2 py-1 rounded-full ${
+                          order.status === 'completed' ? 'bg-green-100 text-green-800' :
+                          order.status === 'ready' ? 'bg-blue-100 text-blue-800' :
+                          'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {order.status || 'pending'}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
-              <div className="p-6">
-                {stats.lowStockProducts.length === 0 ? (
-                  <p className="text-gray-500 text-center py-4">All products in stock</p>
-                ) : (
-                  <div className="space-y-4">
-                    {stats.lowStockProducts.map((product) => (
-                      <div key={product._id} className="flex items-center justify-between py-3 border-b last:border-b-0">
-                        <div>
-                          <p className="font-medium text-gray-900">{product.name}</p>
-                          <p className="text-sm text-gray-600">{product.category}</p>
-                        </div>
-                        <div className="text-right">
-                          <p className="font-semibold text-red-600">{product.stock} left</p>
-                          <p className="text-sm text-gray-600">{product.unit}</p>
-                        </div>
+
+              {/* Low Stock Alert */}
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                    Low Stock Alert
+                    <AlertTriangle className="w-5 h-5 text-orange-500" />
+                  </h3>
+                  <Link href="/admin/products" className="text-green-600 hover:text-green-700 text-sm">
+                    Manage
+                  </Link>
+                </div>
+                <div className="space-y-3">
+                  {stats.lowStockProducts.slice(0, 5).map((product) => (
+                    <div key={product._id} className="flex items-center justify-between p-3 border rounded-lg">
+                      <div>
+                        <p className="font-medium text-gray-900">{product.name}</p>
+                        <p className="text-sm text-gray-500">{product.category}</p>
                       </div>
-                    ))}
+                      <div className="text-right">
+                        <p className="font-semibold text-orange-600">{product.stock} left</p>
+                        <p className="text-sm text-gray-500">${product.price}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* Top Products */}
+            <div className="mt-8 bg-white rounded-lg shadow-sm p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">Top Selling Products</h3>
+              <div className="space-y-3">
+                {stats.topProducts.map((product, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center text-green-600 font-semibold text-sm">
+                        {index + 1}
+                      </div>
+                      <div>
+                        <p className="font-medium text-gray-900">{product.name}</p>
+                        <p className="text-sm text-gray-500">{product.stock} in stock</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-semibold text-gray-900">{product.sales} sold</p>
+                    </div>
                   </div>
-                )}
+                ))}
               </div>
             </div>
           </div>
-
-          {/* Quick Actions */}
-          <div className="mt-8 bg-white rounded-lg shadow-sm p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <Link
-                href="/admin/products?action=add"
-                className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-500 hover:bg-green-50 transition-colors"
-              >
-                <Package className="w-5 h-5 mr-2 text-green-600" />
-                <span className="font-medium text-gray-700">Add Product</span>
-              </Link>
-              
-              <Link
-                href="/admin/orders?status=pending"
-                className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-500 hover:bg-green-50 transition-colors"
-              >
-                <Clock className="w-5 h-5 mr-2 text-green-600" />
-                <span className="font-medium text-gray-700">Pending Orders</span>
-              </Link>
-              
-              <Link
-                href="/admin/products?low-stock=true"
-                className="flex items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-500 hover:bg-green-50 transition-colors"
-              >
-                <TrendingUp className="w-5 h-5 mr-2 text-green-600" />
-                <span className="font-medium text-gray-700">View Analytics</span>
-              </Link>
-            </div>
-          </div>
-        </main>
+        </div>
       </div>
-
+      
       <Footer />
     </div>
   );

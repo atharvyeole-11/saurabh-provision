@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
-import { ShoppingCart, User, Menu, X, Phone, Clock } from 'lucide-react';
+import { ShoppingCart, User, Menu, X, Phone, Clock, MapPin } from 'lucide-react';
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -21,9 +21,15 @@ export default function Navbar() {
         <div className="flex justify-between h-16">
           <div className="flex items-center">
             <Link href="/" className="flex items-center">
-              <span className="text-2xl font-bold text-green-600">
-                Saurabh Provision
-              </span>
+              <div>
+                <span className="text-2xl font-bold text-green-600">
+                  Saurabh Provision
+                </span>
+                <div className="flex items-center text-xs text-gray-600 mt-1">
+                  <MapPin className="w-3 h-3 mr-1 text-green-600" />
+                  Malegaon, Maharashtra
+                </div>
+              </div>
             </Link>
           </div>
 
@@ -45,18 +51,17 @@ export default function Navbar() {
           </div>
 
           <div className="hidden md:flex items-center space-x-4">
+            <div className="flex items-center text-sm text-gray-600 bg-green-50 px-3 py-1 rounded-full border border-green-200">
+              <MapPin className="w-4 h-4 mr-1 text-green-600" />
+              Malegaon, MH
+            </div>
             <a 
-              href="https://www.google.com/maps?q=20.548194047496573,74.52510759792922" 
-              target="_blank"
-              rel="noopener noreferrer"
+              href="tel:9766689821" 
               className="flex items-center text-sm text-gray-600 hover:text-green-600 transition-colors bg-gray-100 px-3 py-1 rounded-full"
             >
-              📍 Pune, MH
-            </a>
-            <div className="flex items-center text-sm text-gray-600">
               <Phone className="w-4 h-4 mr-1" />
               9766689821
-            </div>
+            </a>
             <Link href="/cart" className="relative">
               <ShoppingCart className="w-6 h-6 text-gray-600 hover:text-green-600 transition-colors" />
               {getCartCount() > 0 && (
@@ -84,7 +89,7 @@ export default function Navbar() {
                       </Link>
                       <button
                         onClick={handleLogout}
-                        className="w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-gray-50"
+                        className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                       >
                         Logout
                       </button>

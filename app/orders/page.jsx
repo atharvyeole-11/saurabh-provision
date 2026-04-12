@@ -4,6 +4,7 @@ import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import OrderBill from '@/components/OrderBill';
 import Link from 'next/link';
+import { MapPin } from 'lucide-react';
 
 export default function OrdersPage() {
   const { user, loading } = useAuth();
@@ -45,7 +46,14 @@ export default function OrdersPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">My Orders</h1>
+      <div className="flex items-center gap-3 mb-6">
+        <h1 className="text-2xl font-bold">My Orders</h1>
+        <div className="flex items-center bg-green-50 px-3 py-1 rounded-full border border-green-200">
+          <MapPin className="w-4 h-4 mr-1 text-green-600" />
+          <span className="text-sm text-green-700 font-medium">Malegaon</span>
+        </div>
+      </div>
+      <p className="text-gray-600 mb-6">Your order history for pickup in Malegaon</p>
       <div className="space-y-6">
         {orders.map(order => (
           <OrderBill key={order._id} order={order} />

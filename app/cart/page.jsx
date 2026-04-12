@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
+import PaymentSystem from '@/components/PaymentSystem';
+import OrderConfirmation from '@/components/OrderConfirmation';
+import { ShoppingCart, Trash2, Plus, Minus, Clock, AlertCircle, MapPin } from 'lucide-react';
 
 const TIME_SLOTS = [
   '7:00 AM - 8:00 AM','8:00 AM - 9:00 AM','9:00 AM - 10:00 AM',
@@ -16,20 +19,28 @@ const TIME_SLOTS = [
 ];
 
 export default function CartPage() {
-  const { cart, removeFromCart, updateQty, clearCart, cartTotal, discountTotal, pickupTime, setPickupTime, paymentMode, setPaymentMode } = useCart();
+  const { cart, removeFromCart, updateQty, clearCart, getCartTotal, getCartCount, selectedPickupTime, setPickupTime } = useCart();
   const { user } = useAuth();
   const router = useRouter();
-  const [placing, setPlacing] = useState(false);
+  const [showPayment, setShowPayment] = useState(false);
+  const [confirmedOrder, setConfirmedOrder] = useState(null);
 
-  const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
+  const subtotal = cart.reduce((s, i) => s + i.price * i.quantity, 0);
+  const discountTotal = cart.reduce((s, i) => {
+    if (i.discount && i.discount > 0) {
+      return s + (i.price * i.discount / 100) * i.quantity;
+    }
+    return s;
+  }, 0);
+  const cartTotal = subtotal - discountTotal;
 
-  const handlePlaceOrder = async () => {
+  const handleProceedToPayment = () => {
     if (!user) {
       toast.error('Please login first!');
       router.push('/login');
       return;
     }
-    if (!pickupTime) {
+    if (!selectedPickupTime) {
       toast.error('Please select a pickup time!');
       return;
     }
@@ -38,54 +49,38 @@ export default function CartPage() {
       return;
     }
 
-    setPlacing(true);
-    try {
-      const orderId = 'SP' + Date.now().toString().slice(-6);
-      const orderData = {
-        user: user.id,
-        orderId,
-        items: cart.map(i => ({
-          product: i._id,
-          name: i.name,
-          qty: i.qty,
-          price: i.price,
-          discount: i.discount || 0
-        })),
-        subtotal,
-        discountAmount: discountTotal,
-        totalAmount: cartTotal,
-        paymentMode,
-        pickupTime,
-        status: 'pending'
-      };
-
-      const res = await fetch('/api/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(orderData)
-      });
-
-      const data = await res.json();
-      if (res.ok) {
-        clearCart();
-        toast.success('Order placed successfully! 🎉');
-        router.push('/orders');
-      } else {
-        toast.error(data.error || 'Failed to place order');
-      }
-    } catch (err) {
-      toast.error('Something went wrong');
-    } finally {
-      setPlacing(false);
-    }
+    setShowPayment(true);
   };
+
+  const handleOrderComplete = (order) => {
+    setConfirmedOrder(order);
+    setShowPayment(false);
+  };
+
+  if (confirmedOrder) {
+    return <OrderConfirmation order={confirmedOrder} />;
+  }
+
+  if (showPayment) {
+    return (
+      <PaymentSystem
+        cart={cart}
+        selectedPickupTime={selectedPickupTime}
+        onOrderComplete={handleOrderComplete}
+      />
+    );
+  }
 
   if (cart.length === 0) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center">
-        <p className="text-2xl mb-2">🛒</p>
-        <h2 className="text-xl font-bold mb-2">Your cart is empty</h2>
-        <Link href="/products" className="bg-green-600 text-white px-6 py-2 rounded-lg">
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
+        <ShoppingCart className="w-24 h-24 text-gray-300 mb-4" />
+        <h2 className="text-2xl font-bold text-gray-900 mb-2">Your cart is empty</h2>
+        <p className="text-gray-600 mb-6">Add some items to get started</p>
+        <Link
+          href="/products"
+          className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-semibold transition-colors"
+        >
           Browse Products
         </Link>
       </div>
@@ -93,98 +88,343 @@ export default function CartPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 py-8">
-      <h1 className="text-2xl font-bold mb-6">Your Cart</h1>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-3">
-          {cart.map(item => (
-            <div key={item._id} className="bg-white border rounded-xl p-4 flex items-center gap-4">
-              <div className="w-16 h-16 bg-green-100 rounded-lg flex items-center justify-center text-2xl">
-                🛒
-              </div>
-              <div className="flex-1">
-                <h3 className="font-medium">{item.name}</h3>
-                <p className="text-green-600 font-bold">₹{item.price}</p>
-                {item.discount > 0 && (
-                  <p className="text-xs text-orange-500">{item.discount}% OFF applied</p>
-                )}
-              </div>
-              <div className="flex items-center gap-2">
-                <button onClick={() => updateQty(item._id, item.qty - 1)}
-                  className="w-8 h-8 border rounded-full flex items-center justify-center hover:bg-gray-100">-</button>
-                <span className="w-8 text-center font-bold">{item.qty}</span>
-                <button onClick={() => updateQty(item._id, item.qty + 1)}
-                  className="w-8 h-8 border rounded-full flex items-center justify-center hover:bg-gray-100">+</button>
-              </div>
-              <div className="text-right">
-                <p className="font-bold">₹{(item.price * item.qty).toFixed(0)}</p>
-                <button onClick={() => removeFromCart(item._id)}
-                  className="text-red-500 text-xs mt-1 hover:underline">Remove</button>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        <div className="space-y-4">
-          <div className="bg-white border rounded-xl p-4">
-            <h3 className="font-bold mb-3">Select Pickup Time *</h3>
-            <select
-              value={pickupTime}
-              onChange={e => setPickupTime(e.target.value)}
-              className="w-full border rounded-lg p-2 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-            >
-              <option value="">-- Select Time Slot --</option>
-              {TIME_SLOTS.map(slot => (
-                <option key={slot} value={slot}>{slot}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="bg-white border rounded-xl p-4">
-            <h3 className="font-bold mb-3">Payment Method</h3>
-            <label className="flex items-center gap-3 p-2 border rounded-lg mb-2 cursor-pointer hover:bg-green-50">
-              <input type="radio" name="payment" value="cash"
-                checked={paymentMode === 'cash'}
-                onChange={() => setPaymentMode('cash')} />
-              <div>
-                <p className="font-medium">💵 Cash on Pickup</p>
-                <p className="text-xs text-gray-500">Pay when you collect</p>
-              </div>
-            </label>
-            <label className="flex items-center gap-3 p-2 border rounded-lg cursor-pointer hover:bg-blue-50">
-              <input type="radio" name="payment" value="online"
-                checked={paymentMode === 'online'}
-                onChange={() => setPaymentMode('online')} />
-              <div>
-                <p className="font-medium">💳 Pay Online</p>
-                <p className="text-xs text-gray-500">Contact: 9766689821</p>
-              </div>
-            </label>
-          </div>
-
-          <div className="bg-white border rounded-xl p-4">
-            <h3 className="font-bold mb-3">Bill Summary</h3>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span>Subtotal</span><span>₹{subtotal.toFixed(2)}</span>
-              </div>
-              {discountTotal > 0 && (
-                <div className="flex justify-between text-green-600">
-                  <span>Discount</span><span>-₹{discountTotal.toFixed(2)}</span>
+    <div className="min-h-screen bg-gray-50 py-8">
+      <div className="max-w-4xl mx-auto px-4">
+        <h1 className="text-2xl font-bold text-gray-900 mb-6">Shopping Cart</h1>
+        
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Cart Items */}
+          <div className="lg:col-span-2 space-y-4">
+            {cart.map((item) => {
+              const itemPrice = item.price * (1 - (item.discount || 0) / 100);
+              const itemTotal = itemPrice * item.quantity;
+              
+              return (
+                <div key={item.productId} className="bg-white rounded-lg shadow-sm p-4">
+                  <div className="flex items-start gap-4">
+                    <div className="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center">
+                      <span className="text-2xl">No Image</span>
+                    </div>
+                    
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-900 mb-1">{item.name}</h3>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-green-600 font-bold">${itemPrice.toFixed(2)}</span>
+                        {item.discount && item.discount > 0 && (
+                          <>
+                            <span className="text-gray-400 line-through text-sm">
+                              ${item.price.toFixed(2)}
+                            </span>
+                            <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                              {item.discount}% OFF
+                            </span>
+                          </>
+                        )}
+                      </div>
+                      
+                      {/* Quantity Controls */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => updateQty(item.productId, item.quantity - 1)}
+                            disabled={item.quantity <= 1}
+                            className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <Minus className="w-4 h-4" />
+                          </button>
+                          <span className="w-8 text-center font-medium">{item.quantity}</span>
+                          <button
+                            onClick={() => updateQty(item.productId, item.quantity + 1)}
+                            className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100"
+                          >
+                            <Plus className="w-4 h-4" />
+                          </button>
+                        </div>
+                        
+                        <div className="flex items-center gap-3">
+                          <span className="font-bold text-green-600">${itemTotal.toFixed(2)}</span>
+                          <button
+                            onClick={() => removeFromCart(item.productId)}
+                            className="text-red-500 hover:text-red-700 transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-              )}
-              <div className="flex justify-between font-bold text-lg border-t pt-2">
-                <span>Total</span>
-                <span className="text-green-700">₹{cartTotal.toFixed(2)}</span>
+              );
+            })}
+          </div>
+
+          {/* Checkout Summary */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-lg shadow-sm p-6 sticky top-4">
+              <h2 className="text-xl font-bold text-gray-900 mb-6">Order Summary</h2>
+              
+              {/* Pickup Time */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <Clock className="w-4 h-4 inline mr-1" />
+                  Pickup Time *
+                </label>
+                <select
+                  value={selectedPickupTime}
+                  onChange={(e) => setPickupTime(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                >
+                  <option value="">Select pickup time</option>
+                  {TIME_SLOTS.map((slot) => (
+                    <option key={slot} value={slot}>{slot}</option>
+                  ))}
+                </select>
+                {!selectedPickupTime && (
+                  <p className="text-xs text-red-500 mt-1 flex items-center">
+                    <AlertCircle className="w-3 h-3 mr-1" />
+                    Please select a pickup time
+                  </p>
+                )}
+                <div className="mt-2 p-2 bg-orange-50 border border-orange-200 rounded-lg">
+                  <p className="text-xs text-orange-700 flex items-center">
+                    <MapPin className="w-3 h-3 mr-1" />
+                    <strong>Pickup available in Malegaon only</strong>
+                  </p>
+                  <p className="text-xs text-orange-600 mt-1">
+                    Orders prepared within selected time slot
+                  </p>
+                </div>
               </div>
+
+              {/* Price Breakdown */}
+              <div className="mb-6">
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-gray-600">Subtotal</span>
+                  <span className="font-medium">${subtotal.toFixed(2)}</span>
+                </div>
+                {discountTotal > 0 && (
+                  <div className="flex justify-between text-sm mb-2">
+                    <span className="text-gray-600">Discount</span>
+                    <span className="font-medium text-green-600">-${discountTotal.toFixed(2)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-lg font-bold text-gray-900 pt-2 border-t border-gray-200">
+                  <span>Total</span>
+                  <span className="text-green-600">${cartTotal.toFixed(2)}</span>
+                </div>
+              </div>
+
+              {/* Checkout Button */}
+              <button
+                onClick={handleProceedToPayment}
+                className="w-full bg-green-600 hover:bg-green-700 text-white py-3 px-4 rounded-lg font-semibold transition-colors"
+              >
+                Proceed to Payment
+              </button>
+
+              {/* Continue Shopping */}
+              <Link
+                href="/products"
+                className="block w-full text-center text-green-600 hover:text-green-700 py-2 px-4 rounded-lg font-medium transition-colors mt-3"
+              >
+                Continue Shopping
+              </Link>
             </div>
-            <button
-              onClick={handlePlaceOrder}
-              disabled={placing}
-              className="mt-4 w-full bg-green-600 text-white py-3 rounded-xl font-bold hover:bg-green-700 disabled:opacity-50 transition"
-            >
-              {placing ? 'Placing Order...' : '🛒 Place Order'}
-            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+              return (
+                <div key={item.productId} className="bg-white rounded-lg shadow-sm p-4 hover:shadow-md transition-shadow">
+                  <div className="flex gap-4">
+                    {/* Product Image */}
+                    <div className="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      {item.image ? (
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="w-full h-full object-cover rounded-lg"
+                        />
+                      ) : (
+                        <ShoppingCart className="w-8 h-8 text-gray-400" />
+                      )}
+                    </div>
+
+                    {/* Product Details */}
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-900 mb-1">{item.name}</h3>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="text-green-600 font-bold">${itemPrice.toFixed(2)}</span>
+                        {hasDiscount && (
+                          <>
+                            <span className="text-gray-400 line-through text-sm">
+                              ${item.price.toFixed(2)}
+                            </span>
+                            <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                              {item.discount}% OFF
+                            </span>
+                          </>
+                        )}
+                      </div>
+                      
+                      {/* Quantity Controls */}
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => updateQty(item.productId, item.quantity - 1)}
+                            disabled={item.quantity <= 1}
+                            className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <Minus className="w-4 h-4" />
+                          </button>
+                          <span className="w-8 text-center font-medium">{item.quantity}</span>
+                          <button
+                            onClick={() => updateQty(item.productId, item.quantity + 1)}
+                            className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center hover:bg-gray-100"
+                          >
+                            <Plus className="w-4 h-4" />
+                          </button>
+                        </div>
+                        
+                        <div className="flex items-center gap-3">
+                          <span className="font-bold text-green-600">${itemTotal.toFixed(2)}</span>
+                          <button
+                            onClick={() => removeFromCart(item.productId)}
+                            className="text-red-500 hover:text-red-700 transition-colors"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Checkout Summary */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-lg shadow-sm p-6 sticky top-4">
+              <h2 className="text-xl font-bold text-gray-900 mb-6">Order Summary</h2>
+              
+              {/* Pickup Time */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <Clock className="w-4 h-4 inline mr-1" />
+                  Pickup Time *
+                </label>
+                <select
+                  value={selectedPickupTime}
+                  onChange={(e) => setPickupTime(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500"
+                >
+                  <option value="">Select pickup time</option>
+                  {TIME_SLOTS.map((slot) => (
+                    <option key={slot} value={slot}>{slot}</option>
+                  ))}
+                </select>
+                {!selectedPickupTime && (
+                  <p className="text-xs text-red-500 mt-1 flex items-center">
+                    <AlertCircle className="w-3 h-3 mr-1" />
+                    Please select a pickup time
+                  </p>
+                )}
+                <div className="mt-2 p-2 bg-orange-50 border border-orange-200 rounded-lg">
+                  <p className="text-xs text-orange-700 flex items-center">
+                    <MapPin className="w-3 h-3 mr-1" />
+                    <strong>Pickup available in Malegaon only</strong>
+                  </p>
+                  <p className="text-xs text-orange-600 mt-1">
+                    Orders prepared within selected time slot
+                  </p>
+                </div>
+              </div>
+
+              {/* Payment Method */}
+              <div className="mb-6">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <CreditCard className="w-4 h-4 inline mr-1" />
+                  Payment Method
+                </label>
+                <div className="space-y-2">
+                  <label className="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                    <input
+                      type="radio"
+                      name="payment"
+                      value="cash"
+                      checked={paymentMode === 'cash'}
+                      onChange={(e) => setPaymentMode(e.target.value)}
+                      className="mr-3"
+                    />
+                    <div>
+                      <p className="font-medium">Cash on Pickup</p>
+                      <p className="text-xs text-gray-500">Pay when you collect</p>
+                    </div>
+                  </label>
+                  <label className="flex items-center p-3 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50">
+                    <input
+                      type="radio"
+                      name="payment"
+                      value="online"
+                      checked={paymentMode === 'online'}
+                      onChange={(e) => setPaymentMode(e.target.value)}
+                      className="mr-3"
+                    />
+                    <div>
+                      <p className="font-medium">Pay Online</p>
+                      <p className="text-xs text-gray-500">Coming soon</p>
+                    </div>
+                  </label>
+                </div>
+              </div>
+
+              {/* Price Breakdown */}
+              <div className="space-y-3 mb-6">
+                <div className="flex justify-between text-sm">
+                  <span>Subtotal</span>
+                  <span>${subtotal.toFixed(2)}</span>
+                </div>
+                {discountTotal > 0 && (
+                  <div className="flex justify-between text-sm text-green-600">
+                    <span>Discount</span>
+                    <span>-${discountTotal.toFixed(2)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-sm">
+                  <span>Pickup Fee</span>
+                  <span className="text-green-600">FREE</span>
+                </div>
+                <div className="border-t pt-3">
+                  <div className="flex justify-between text-lg font-bold text-green-700">
+                    <span>Total</span>
+                    <span>${cartTotal.toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Place Order Button */}
+              <button
+                onClick={handlePlaceOrder}
+                disabled={placing || !selectedPickupTime}
+                className={`w-full py-3 rounded-lg font-bold transition-colors ${
+                  placing || !selectedPickupTime
+                    ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                    : 'bg-green-600 text-white hover:bg-green-700'
+                }`}
+              >
+                {placing ? 'Placing Order...' : 'Place Order'}
+              </button>
+
+              {paymentMode === 'online' && (
+                <p className="text-xs text-orange-600 mt-2 text-center">
+                  Online payments coming soon. Please use Cash on Pickup.
+                </p>
+              )}
+            </div>
           </div>
         </div>
       </div>
