@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
   CheckCircle, 
@@ -10,32 +10,45 @@ import {
   Download, 
   Calendar,
   Copy,
-  Check
+  Check,
+  MessageCircle
 } from 'lucide-react';
 
 export default function OrderConfirmation({ order }) {
   const [copied, setCopied] = useState(false);
+  const [autoRedirected, setAutoRedirected] = useState(false);
 
   const handleWhatsAppShare = () => {
-    const message = `*Order Confirmation*\n\n` +
+    const message = `*SAURABH PROVISION - ORDER PREVIEW*\n` +
+      `--------------------------------\n` +
       `*Order ID:* ${order.orderId}\n` +
-      `*Store:* Saurabh Provision\n` +
-      `*Location:* Malegaon, Maharashtra\n\n` +
-      `*Customer:* ${order.customerDetails.name}\n` +
-      `*Phone:* ${order.customerDetails.phone}\n\n` +
+      `--------------------------------\n` +
+      `*Customer:* ${order.customerDetails.name || 'Guest'}\n` +
+      `*Phone:* ${order.customerDetails.phone || 'N/A'}\n` +
+      `*Pickup:* ${order.pickupTime}\n` +
+      `--------------------------------\n` +
       `*Items:*\n` +
       order.items.map(item => 
-        `  ${item.name} x${item.quantity} = $${item.total.toFixed(2)}`
+        `• ${item.name} x${item.quantity} = ₹${(item.price * item.quantity).toFixed(2)}`
       ).join('\n') +
-      `\n\n` +
-      `*Total:* $${order.totalAmount.toFixed(2)}\n` +
-      `*Pickup Time:* ${order.pickupTime}\n` +
-      `*Payment:* ${order.paymentMethod.toUpperCase()}\n` +
-      `*Status:* ${order.status.charAt(0).toUpperCase() + order.status.slice(1)}\n\n` +
-      `Your order will be ready before you arrive!`;
+      `\n--------------------------------\n` +
+      `*TOTAL AMOUNT: ₹${order.totalAmount.toFixed(2)}*\n` +
+      `--------------------------------\n` +
+      `_Pre-order generated from Saurabh Store Website_`;
 
     window.open(`https://wa.me/919766689821?text=${encodeURIComponent(message)}`, '_blank');
   };
+
+  useEffect(() => {
+    // Automatically trigger WhatsApp share after 2 seconds for a seamless experience
+    const timer = setTimeout(() => {
+      if (!autoRedirected) {
+        handleWhatsAppShare();
+        setAutoRedirected(true);
+      }
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleCopyOrderId = () => {
     navigator.clipboard.writeText(order.orderId);
@@ -165,7 +178,7 @@ export default function OrderConfirmation({ order }) {
             </div>
           </div>
 
-          {/* Order Info */}
+          {/* Items List */}
           <div className="p-6">
             <div className="grid grid-cols-2 gap-4 mb-6">
               <div>
@@ -191,7 +204,7 @@ export default function OrderConfirmation({ order }) {
                     <div>
                       <p className="font-medium text-gray-900">{item.name}</p>
                       <p className="text-sm text-gray-600">
-                        ${item.price.toFixed(2)} × {item.quantity}
+                        ₹{item.price.toFixed(2)} × {item.quantity}
                         {item.discount > 0 && (
                           <span className="text-green-600 ml-2">
                             ({item.discount}% off)
@@ -200,7 +213,7 @@ export default function OrderConfirmation({ order }) {
                       </p>
                     </div>
                     <p className="font-medium text-gray-900">
-                      ${item.total.toFixed(2)}
+                      ₹{item.total.toFixed(2)}
                     </p>
                   </div>
                 ))}
@@ -221,7 +234,7 @@ export default function OrderConfirmation({ order }) {
               </div>
               <div className="flex justify-between items-center text-lg font-bold pt-2 border-t border-gray-200">
                 <span>Total Amount</span>
-                <span className="text-green-600">${order.totalAmount.toFixed(2)}</span>
+                <span className="text-green-600">₹{order.totalAmount.toFixed(2)}</span>
               </div>
             </div>
           </div>

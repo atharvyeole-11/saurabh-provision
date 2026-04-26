@@ -122,7 +122,7 @@ export default function BillPreview({ cart, selectedPickupTime, onProceedToPayme
                   <div className="flex-1">
                     <p className="font-medium text-gray-900">{item.name}</p>
                     <p className="text-sm text-gray-600">
-                      ${item.price.toFixed(2)} × {item.quantity}
+                      ₹{item.price.toFixed(2)} × {item.quantity}
                       {item.discount && (
                         <span className="text-green-600 ml-2">
                           ({item.discount}% off)
@@ -133,11 +133,11 @@ export default function BillPreview({ cart, selectedPickupTime, onProceedToPayme
                   <div className="text-right">
                     {item.discount && (
                       <p className="text-sm text-gray-400 line-through">
-                        ${itemTotal.toFixed(2)}
+                        ₹{itemTotal.toFixed(2)}
                       </p>
                     )}
                     <p className="font-medium text-gray-900">
-                      ${finalItemTotal.toFixed(2)}
+                      ₹{finalItemTotal.toFixed(2)}
                     </p>
                   </div>
                 </div>
@@ -150,17 +150,17 @@ export default function BillPreview({ cart, selectedPickupTime, onProceedToPayme
         <div className="space-y-2 mb-6">
           <div className="flex justify-between text-sm">
             <span className="text-gray-600">Subtotal</span>
-            <span className="font-medium">${subtotal.toFixed(2)}</span>
+            <span className="font-medium">₹{subtotal.toFixed(2)}</span>
           </div>
           {discountTotal > 0 && (
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">Discount</span>
-              <span className="font-medium text-green-600">-${discountTotal.toFixed(2)}</span>
+              <span className="font-medium text-green-600">-₹{discountTotal.toFixed(2)}</span>
             </div>
           )}
           <div className="flex justify-between text-lg font-bold text-gray-900 pt-2 border-t border-gray-200">
             <span>Total Amount</span>
-            <span className="text-green-600">${total.toFixed(2)}</span>
+            <span className="text-green-600">₹{total.toFixed(2)}</span>
           </div>
         </div>
 
