@@ -31,13 +31,14 @@ export async function GET(request) {
   } catch (error) {
     console.error('Get user error:', error);
     
-    // Fallback: If DB is not connected and we have a dummy token, allow it
-    if (error.message && error.message.includes('connect ECONNREFUSED')) {
+    // Fallback: If DB is not connected or any other error, and we have a decoded token, return dummy user
+    const decoded = await getUserFromToken().catch(() => null);
+    if (decoded && decoded.userId === 'demo-user-id') {
       return NextResponse.json({
         user: {
-          id: 'dummy-user-id',
+          id: 'demo-user-id',
           name: 'Demo User',
-          email: 'demo@example.com',
+          email: decoded.email || 'demo@example.com',
           role: 'admin',
           addresses: []
         }

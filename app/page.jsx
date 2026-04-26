@@ -36,7 +36,7 @@ export default function Home() {
 
       if (categoriesRes.ok) {
         const data = await categoriesRes.json();
-        setCategories(data || []);
+        setCategories(data.categories || []);
       }
 
       if (bannerRes.ok) {
