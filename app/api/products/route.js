@@ -3,6 +3,55 @@ import Product from '@/models/Product';
 import { requireAdmin } from '@/lib/auth';
 import { successResponse, errorResponse } from '@/lib/api-response';
 
+function getDummyProducts() {
+  return [
+    {
+      _id: 'dummy1',
+      name: 'Fresh Organic Tomatoes',
+      price: 45,
+      discount: 10,
+      image: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?auto=format&fit=crop&q=80',
+      category: 'Vegetables',
+      description: 'Fresh organic tomatoes from local farms.',
+      inStock: true,
+      stock: 50
+    },
+    {
+      _id: 'dummy2',
+      name: 'Whole Wheat Bread',
+      price: 35,
+      discount: 0,
+      image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&q=80',
+      category: 'Bakery',
+      description: 'Freshly baked whole wheat bread.',
+      inStock: true,
+      stock: 20
+    },
+    {
+      _id: 'dummy3',
+      name: 'Farm Fresh Eggs (1 Dozen)',
+      price: 80,
+      discount: 5,
+      image: 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?auto=format&fit=crop&q=80',
+      category: 'Dairy',
+      description: 'Free range brown eggs.',
+      inStock: true,
+      stock: 100
+    },
+    {
+      _id: 'dummy4',
+      name: 'Premium Basmati Rice',
+      price: 150,
+      discount: 15,
+      image: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&q=80',
+      category: 'Grains',
+      description: 'Long grain premium basmati rice.',
+      inStock: true,
+      stock: 10
+    }
+  ];
+}
+
 export async function GET(req) {
   try {
     await connectToDatabase();
@@ -36,58 +85,18 @@ export async function GET(req) {
       Product.countDocuments(query)
     ]);
     
+    // If database is connected but empty, still show dummy products for demonstration
+    if (products.length === 0 && !searchParams.get('category') && !searchParams.get('search')) {
+      return successResponse({ products: getDummyProducts() }, { page: 1, pages: 1, total: 4 });
+    }
+    
     return successResponse(
       { products }, 
       { page, pages: Math.ceil(total / limit), total }
     );
   } catch (error) {
     console.error('GET /api/products error:', error);
-    
-    // Fallback to dummy data if DB is not connected
-    const dummyProducts = [
-      {
-        _id: 'dummy1',
-        name: 'Fresh Organic Tomatoes',
-        price: 45,
-        discount: 10,
-        image: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?auto=format&fit=crop&q=80',
-        category: 'Vegetables',
-        description: 'Fresh organic tomatoes from local farms.',
-        inStock: true
-      },
-      {
-        _id: 'dummy2',
-        name: 'Whole Wheat Bread',
-        price: 35,
-        discount: 0,
-        image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&q=80',
-        category: 'Bakery',
-        description: 'Freshly baked whole wheat bread.',
-        inStock: true
-      },
-      {
-        _id: 'dummy3',
-        name: 'Farm Fresh Eggs (1 Dozen)',
-        price: 80,
-        discount: 5,
-        image: 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?auto=format&fit=crop&q=80',
-        category: 'Dairy',
-        description: 'Free range brown eggs.',
-        inStock: true
-      },
-      {
-        _id: 'dummy4',
-        name: 'Premium Basmati Rice',
-        price: 150,
-        discount: 15,
-        image: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&q=80',
-        category: 'Grains',
-        description: 'Long grain premium basmati rice.',
-        inStock: true
-      }
-    ];
-    
-    return successResponse({ products: dummyProducts }, { page: 1, pages: 1, total: 4 });
+    return successResponse({ products: getDummyProducts() }, { page: 1, pages: 1, total: 4 });
   }
 }
 
