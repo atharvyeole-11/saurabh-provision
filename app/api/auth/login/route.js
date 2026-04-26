@@ -47,8 +47,33 @@ export async function POST(request) {
       return response;
     }
 
-    // Find user by email
-    const user = await User.findOne({ email });
+    // Find user
+    let user = await User.findOne({ email });
+    
+    // Demo Mode Bypass: If user doesn't exist but it's the demo email, allow it
+    if (!user && email === 'demo@example.com') {
+      console.log('User not found but using demo email, allowing demo login');
+      const demoToken = jwt.sign(
+        { userId: 'demo-user-id', email: 'demo@example.com', role: 'admin' },
+        process.env.JWT_SECRET || 'demo-secret',
+        { expiresIn: '7d' }
+      );
+      
+      const response = NextResponse.json({
+        user: { id: 'demo-user-id', name: 'Demo Admin', email: 'demo@example.com', role: 'admin' }
+      });
+      
+      response.cookies.set('token', demoToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 7 * 24 * 60 * 60,
+        path: '/'
+      });
+      
+      return response;
+    }
+
     if (!user) {
       return NextResponse.json(
         { error: 'Invalid credentials' },

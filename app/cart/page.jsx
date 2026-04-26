@@ -109,11 +109,11 @@ export default function CartPage() {
                     <div className="flex-1">
                       <h3 className="font-semibold text-gray-900 mb-1">{item.name}</h3>
                       <div className="flex items-center gap-2 mb-2">
-                        <span className="text-green-600 font-bold">${itemPrice.toFixed(2)}</span>
+                        <span className="text-green-600 font-bold">₹{itemPrice.toFixed(2)}</span>
                         {item.discount && item.discount > 0 && (
                           <>
                             <span className="text-gray-400 line-through text-sm">
-                              ${item.price.toFixed(2)}
+                              ₹{item.price.toFixed(2)}
                             </span>
                             <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
                               {item.discount}% OFF
@@ -142,7 +142,7 @@ export default function CartPage() {
                         </div>
                         
                         <div className="flex items-center gap-3">
-                          <span className="font-bold text-green-600">${itemTotal.toFixed(2)}</span>
+                          <span className="font-bold text-green-600">₹{itemTotal.toFixed(2)}</span>
                           <button
                             onClick={() => removeFromCart(item.productId)}
                             className="text-red-500 hover:text-red-700 transition-colors"
@@ -200,17 +200,17 @@ export default function CartPage() {
               <div className="mb-6">
                 <div className="flex justify-between text-sm mb-2">
                   <span className="text-gray-600">Subtotal</span>
-                  <span className="font-medium">${subtotal.toFixed(2)}</span>
+                  <span className="font-medium">₹{subtotal.toFixed(2)}</span>
                 </div>
                 {discountTotal > 0 && (
                   <div className="flex justify-between text-sm mb-2">
                     <span className="text-gray-600">Discount</span>
-                    <span className="font-medium text-green-600">-${discountTotal.toFixed(2)}</span>
+                    <span className="font-medium text-green-600">-₹{discountTotal.toFixed(2)}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-lg font-bold text-gray-900 pt-2 border-t border-gray-200">
                   <span>Total</span>
-                  <span className="text-green-600">${cartTotal.toFixed(2)}</span>
+                  <span className="text-green-600">₹{cartTotal.toFixed(2)}</span>
                 </div>
               </div>
 
