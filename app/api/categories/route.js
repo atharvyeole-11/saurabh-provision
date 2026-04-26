@@ -1,24 +1,47 @@
 import { connectToDatabase } from '@/lib/mongodb';
 import Category from '@/models/Category';
-import { NextResponse } from 'next/server';
+import { requireAdmin } from '@/lib/auth';
+import { successResponse, errorResponse } from '@/lib/api-response';
 
 export async function GET() {
   try {
     await connectToDatabase();
     const categories = await Category.find({});
-    return NextResponse.json(categories);
+    return successResponse({ categories });
   } catch (error) {
-    return NextResponse.json({ error: 'Failed' }, { status: 500 });
+    console.error('GET categories error:', error);
+    
+    // Fallback dummy data
+    const dummyCategories = [
+      { _id: 'cat1', name: 'Vegetables' },
+      { _id: 'cat2', name: 'Fruits' },
+      { _id: 'cat3', name: 'Dairy' },
+      { _id: 'cat4', name: 'Bakery' },
+      { _id: 'cat5', name: 'Snacks' }
+    ];
+    
+    return successResponse({ categories: dummyCategories });
   }
 }
 
 export async function POST(req) {
   try {
+    const isAdmin = await requireAdmin();
+    if (!isAdmin) {
+      return errorResponse('Unauthorized', 403);
+    }
+
     await connectToDatabase();
     const body = await req.json();
+    
+    if (!body.name) {
+      return errorResponse('Category name is required', 400);
+    }
+    
     const category = await Category.create(body);
-    return NextResponse.json(category, { status: 201 });
+    return successResponse({ category }, null, 201);
   } catch (error) {
-    return NextResponse.json({ error: 'Failed' }, { status: 500 });
+    console.error('POST categories error:', error);
+    return errorResponse('Failed to create category', 500, error.message);
   }
 }

@@ -128,17 +128,50 @@ export function CartProvider({ children }) {
     localStorage.setItem('selectedPickupTime', time);
   };
 
+  const [paymentMode, setPaymentMode] = useState('cash');
+
+  // Computed totals
+  const subtotal = cart.reduce((s, i) => s + i.price * (i.qty ?? i.quantity ?? 1), 0);
+  const discountTotal = cart.reduce((s, i) => {
+    if (i.discount && i.discount > 0) {
+      return s + (i.price * (i.qty ?? i.quantity ?? 1) * i.discount / 100);
+    }
+    return s;
+  }, 0);
+  const cartTotal = subtotal - discountTotal;
+
+  // Alias for cart page compatibility
+  const updateQty = (id, qty) => {
+    if (qty <= 0) { removeFromCart(id); return; }
+    setCart(prev => {
+      const updated = prev.map(item =>
+        (item._id === id || item.productId === id)
+          ? { ...item, qty, quantity: qty }
+          : item
+      );
+      saveCart(updated);
+      return updated;
+    });
+  };
+
   const value = {
     cart,
     loading,
     addToCart,
     removeFromCart,
     updateQuantity,
+    updateQty,
     clearCart,
     isInCart,
     getCartItem,
     getCartTotal,
     getCartCount,
+    cartTotal,
+    subtotal,
+    discountTotal,
+    paymentMode,
+    setPaymentMode,
+    pickupTime: selectedPickupTime,
     selectedPickupTime,
     setPickupTime
   };

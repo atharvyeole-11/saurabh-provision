@@ -18,10 +18,10 @@ export default function OrdersPage() {
       return;
     }
     if (user) {
-      fetch(`/api/orders?userId=${user.id}`)
+      fetch(`/api/orders`)
         .then(r => r.json())
         .then(data => {
-          setOrders(Array.isArray(data) ? data : []);
+          setOrders(Array.isArray(data.orders) ? data.orders : Array.isArray(data) ? data : []);
           setFetching(false);
         })
         .catch(() => setFetching(false));

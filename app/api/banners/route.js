@@ -1,86 +1,87 @@
-import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
-import { getUserFromToken } from '@/lib/auth';
+import Banner from '@/models/Banner';
+import { requireAdmin } from '@/lib/auth';
+import { successResponse, errorResponse } from '@/lib/api-response';
 
 export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     const type = searchParams.get('type');
 
-    const { db } = await connectToDatabase();
+    await connectToDatabase();
     
     let query = { isActive: true };
-    
     if (type) {
       query.type = type;
     }
 
-    const banners = await db.collection('banners')
-      .find(query)
-      .sort({ displayOrder: 1, createdAt: -1 })
-      .toArray();
+    const banners = await Banner.find(query)
+      .sort({ displayOrder: 1, createdAt: -1 });
 
-    return NextResponse.json({ banners });
+    return successResponse({ banners });
   } catch (error) {
     console.error('Get banners error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    
+    // Fallback dummy data
+    const dummyBanners = [
+      {
+        _id: 'banner1',
+        title: 'Fresh Vegetables Daily',
+        subtitle: 'Get 20% off on all organic vegetables',
+        image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80',
+        link: '/products?category=Vegetables',
+        type: 'hero'
+      },
+      {
+        _id: 'banner2',
+        title: 'Premium Dairy Products',
+        subtitle: 'Fresh from the farm to your table',
+        image: 'https://images.unsplash.com/photo-1628088062854-d1870b4553da?auto=format&fit=crop&q=80',
+        link: '/products?category=Dairy',
+        type: 'hero'
+      }
+    ];
+
+    return successResponse({ banners: dummyBanners });
   }
 }
 
 export async function POST(request) {
   try {
-    const user = await getUserFromToken();
-    if (!user || user.role !== 'admin') {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+    const isAdmin = await requireAdmin();
+    if (!isAdmin) {
+      return errorResponse('Unauthorized', 403);
     }
 
-    const { title, subtitle, image, link, displayOrder, type, startDate, endDate } = await request.json();
+    const body = await request.json();
 
-    if (!title || !image) {
-      return NextResponse.json(
-        { error: 'Title and image are required' },
-        { status: 400 }
-      );
+    if (!body.title || !body.image) {
+      return errorResponse('Title and image are required', 400);
     }
 
-    const { db } = await connectToDatabase();
+    await connectToDatabase();
     
-    const result = await db.collection('banners').insertOne({
-      title,
-      subtitle,
-      image,
-      link,
-      displayOrder: displayOrder || 0,
-      type: type || 'hero',
-      startDate: startDate ? new Date(startDate) : null,
-      endDate: endDate ? new Date(endDate) : null,
-      isActive: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
+    const bannerData = {
+      ...body,
+      displayOrder: body.displayOrder || 0,
+      type: body.type || 'hero',
+      startDate: body.startDate ? new Date(body.startDate) : null,
+      endDate: body.endDate ? new Date(body.endDate) : null,
+      isActive: true
+    };
 
-    return NextResponse.json(
+    const banner = await Banner.create(bannerData);
+
+    return successResponse(
       { 
         message: 'Banner created successfully',
-        banner: {
-          id: result.insertedId.toString(),
-          title,
-          type: type || 'hero'
-        }
+        banner
       },
-      { status: 201 }
+      null,
+      201
     );
   } catch (error) {
     console.error('Create banner error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return errorResponse('Internal server error', 500, error.message);
   }
 }

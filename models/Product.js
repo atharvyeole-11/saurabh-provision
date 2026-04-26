@@ -7,6 +7,7 @@ const ProductSchema = new mongoose.Schema({
   category: { type: String, default: 'Grocery' },
   description: { type: String, default: '' },
   inStock: { type: Boolean, default: true },
-  expiryDate: { type: String, default: '' }
+  expiryDate: { type: String, default: '' },
+  featured: { type: Boolean, default: false }
 }, { timestamps: true });
 export default mongoose.models.Product || mongoose.model('Product', ProductSchema);

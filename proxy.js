@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-export function middleware(request) {
+export function proxy(request) {
   const token = request.cookies.get('token');
   if (request.nextUrl.pathname.startsWith('/admin') && !token) {
     return NextResponse.redirect(new URL('/login', request.url));
