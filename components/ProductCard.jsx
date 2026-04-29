@@ -2,7 +2,7 @@
 import Image from 'next/image';
 import { useState } from 'react';
 import { useCart } from '@/context/CartContext';
-import { Plus, Minus, Star, Tag, Package } from 'lucide-react';
+import { Plus, Minus, Star, Tag, Package, Clock } from 'lucide-react';
 
 export default function ProductCard({ product, onAddToCart }) {
   const [imageError, setImageError] = useState(false);

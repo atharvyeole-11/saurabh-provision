@@ -8,7 +8,10 @@ export default function StoreStatus() {
   const [timeUntilClose, setTimeUntilClose] = useState('');
   const [timeUntilOpen, setTimeUntilOpen] = useState('');
 
+  const [mounted, setMounted] = useState(false);
+
   useEffect(() => {
+    setMounted(true);
     const checkStoreStatus = () => {
       const now = new Date();
       const currentHour = now.getHours();
@@ -86,6 +89,8 @@ export default function StoreStatus() {
       return 'Opens tomorrow at 7:00 AM';
     }
   };
+
+  if (!mounted) return <div className="h-10"></div>;
 
   return (
     <div className={`inline-flex items-center px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${

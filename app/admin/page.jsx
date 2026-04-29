@@ -69,15 +69,21 @@ export default function AdminDashboard() {
         fetch('/api/orders'),
         fetch('/api/products'),
         fetch('/api/users'),
-        fetch('/api/orders?limit=5&sort=createdAt'),
+        fetch('/api/orders?limit=5'),
         fetch('/api/products?lowStock=true&limit=5')
       ]);
 
-      const orders = ordersRes.ok ? await ordersRes.json() : [];
-      const products = productsRes.ok ? await productsRes.json() : [];
-      const users = usersRes.ok ? await usersRes.json() : [];
-      const recentOrders = recentOrdersRes.ok ? await recentOrdersRes.json() : [];
-      const lowStockProducts = lowStockRes.ok ? await lowStockRes.json() : [];
+      const ordersData = ordersRes.ok ? await ordersRes.json() : { orders: [] };
+      const productsData = productsRes.ok ? await productsRes.json() : { products: [] };
+      const usersData = usersRes.ok ? await usersRes.json() : { users: [] };
+      const recentOrdersData = recentOrdersRes.ok ? await recentOrdersRes.json() : { orders: [] };
+      const lowStockData = lowStockRes.ok ? await lowStockRes.json() : { products: [] };
+
+      const orders = ordersData.orders || [];
+      const products = productsData.products || [];
+      const users = usersData.users || [];
+      const recentOrders = recentOrdersData.orders || [];
+      const lowStockProducts = lowStockData.products || [];
 
       const today = new Date().toDateString();
       const todayOrders = orders.filter(order => 
@@ -89,14 +95,14 @@ export default function AdminDashboard() {
 
       const totalRevenue = orders
         .filter(order => order.status === 'completed')
-        .reduce((sum, order) => sum + (order.totalAmount || 0), 0);
+        .reduce((sum, order) => sum + (Number(order.totalAmount) || 0), 0);
 
       // Calculate top products
       const productSales = {};
       orders.forEach(order => {
         order.items?.forEach(item => {
-          const productId = item.product || item.productId;
-          productSales[productId] = (productSales[productId] || 0) + (item.quantity || item.qty || 1);
+          const productId = item.productId || item.product;
+          productSales[productId] = (productSales[productId] || 0) + (item.quantity || 1);
         });
       });
 
@@ -108,7 +114,7 @@ export default function AdminDashboard() {
           return {
             name: product?.name || 'Unknown Product',
             sales,
-            stock: product?.stock || 0
+            stock: product?.stockQuantity || 0
           };
         });
 
@@ -303,10 +309,10 @@ export default function AdminDashboard() {
                     <div key={order._id} className="flex items-center justify-between p-3 border rounded-lg">
                       <div>
                         <p className="font-medium text-gray-900">#{order.orderId || order._id?.slice(-6)}</p>
-                        <p className="text-sm text-gray-500">{order.user?.name || 'Unknown'}</p>
+                        <p className="text-sm text-gray-500">{order.customerDetails?.name || 'Unknown'}</p>
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold text-green-600">${order.totalAmount || 0}</p>
+                        <p className="font-semibold text-green-600">₹{order.totalAmount || 0}</p>
                         <span className={`text-xs px-2 py-1 rounded-full ${
                           order.status === 'completed' ? 'bg-green-100 text-green-800' :
                           order.status === 'ready' ? 'bg-blue-100 text-blue-800' :
@@ -339,8 +345,8 @@ export default function AdminDashboard() {
                         <p className="text-sm text-gray-500">{product.category}</p>
                       </div>
                       <div className="text-right">
-                        <p className="font-semibold text-orange-600">{product.stock} left</p>
-                        <p className="text-sm text-gray-500">${product.price}</p>
+                        <p className="font-semibold text-orange-600">{product.stockQuantity} left</p>
+                        <p className="text-sm text-gray-500">₹{product.price}</p>
                       </div>
                     </div>
                   ))}
