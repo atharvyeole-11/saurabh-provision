@@ -14,7 +14,7 @@ function getDummyProducts() {
       category: 'Vegetables',
       description: 'Fresh organic tomatoes from local farms.',
       inStock: true,
-      stock: 50
+      stockQuantity: 50
     },
     {
       _id: 'dummy2',
@@ -25,7 +25,7 @@ function getDummyProducts() {
       category: 'Bakery',
       description: 'Freshly baked whole wheat bread.',
       inStock: true,
-      stock: 20
+      stockQuantity: 20
     },
     {
       _id: 'dummy3',
@@ -36,7 +36,7 @@ function getDummyProducts() {
       category: 'Dairy',
       description: 'Free range brown eggs.',
       inStock: true,
-      stock: 100
+      stockQuantity: 100
     },
     {
       _id: 'dummy4',
@@ -47,7 +47,7 @@ function getDummyProducts() {
       category: 'Grains',
       description: 'Long grain premium basmati rice.',
       inStock: true,
-      stock: 10
+      stockQuantity: 10
     }
   ];
 }

@@ -36,7 +36,7 @@ export async function POST(request) {
         message: 'Logged in (Demo Mode)'
       });
 
-      response.cookies.set('token', demoToken, {
+      response.cookies.set('auth_token', demoToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
@@ -63,7 +63,7 @@ export async function POST(request) {
         user: { id: 'demo-user-id', name: 'Demo Admin', email: 'demo@example.com', role: 'admin' }
       });
       
-      response.cookies.set('token', demoToken, {
+      response.cookies.set('auth_token', demoToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
@@ -108,7 +108,7 @@ export async function POST(request) {
       }
     });
 
-    response.cookies.set('token', token, {
+    response.cookies.set('auth_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',

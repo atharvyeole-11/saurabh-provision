@@ -38,12 +38,12 @@ export default function BillPreview({ cart, selectedPickupTime, onProceedToPayme
       `*Phone:* ${user?.phone || 'N/A'}\n\n` +
       `*Items:*\n` +
       cart.map(item => 
-        `  ${item.name} x${item.quantity} = $${(item.price * item.quantity).toFixed(2)}`
+        `  ${item.name} x${item.quantity} = ₹${(item.price * item.quantity).toFixed(2)}`
       ).join('\n') +
       `\n\n` +
-      `*Subtotal:* $${subtotal.toFixed(2)}\n` +
-      `*Discount:* -$${discountTotal.toFixed(2)}\n` +
-      `*Total:* $${total.toFixed(2)}\n\n` +
+      `*Subtotal:* ₹${subtotal.toFixed(2)}\n` +
+      `*Discount:* -₹${discountTotal.toFixed(2)}\n` +
+      `*Total:* ₹${total.toFixed(2)}\n\n` +
       `*Pickup Time:* ${selectedPickupTime}\n` +
       `*Date:* ${currentDate}\n` +
       `*Time:* ${currentTime}\n\n` +

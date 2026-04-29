@@ -25,7 +25,7 @@ export default function OrderBill({ order }) {
 
   if (!order) return null;
 
-  const subtotal = order.items?.reduce((s, i) => s + i.price * i.qty, 0) || 0;
+  const subtotal = order.items?.reduce((s, i) => s + i.price * i.quantity, 0) || 0;
   const discount = order.discountAmount || 0;
   const total = order.totalAmount || 0;
 
@@ -60,9 +60,9 @@ export default function OrderBill({ order }) {
         {order.items?.map((item, i) => (
           <div key={i} className="flex justify-between text-sm py-1 border-b border-gray-100">
             <span className="w-2/5 truncate">{item.name}</span>
-            <span className="w-1/5 text-center">{item.qty}</span>
+            <span className="w-1/5 text-center">{item.quantity}</span>
             <span className="w-1/5 text-center">₹{item.price}</span>
-            <span className="w-1/5 text-right">₹{item.price * item.qty}</span>
+            <span className="w-1/5 text-right">₹{item.price * item.quantity}</span>
           </div>
         ))}
 
@@ -94,7 +94,7 @@ export default function OrderBill({ order }) {
           </div>
           <div className="flex justify-between">
             <span className="text-gray-500">Payment</span>
-            <span className="font-medium capitalize">{order.paymentMode === 'cash' ? 'Cash on Pickup' : 'Online Paid'}</span>
+            <span className="font-medium capitalize">{order.paymentMethod === 'cash' ? 'Cash on Pickup' : 'Online Paid'}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-500">Status</span>

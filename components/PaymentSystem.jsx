@@ -229,7 +229,7 @@ export default function PaymentSystem({ cart, selectedPickupTime, onOrderComplet
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">Items ({cart.length})</span>
-              <span className="font-medium">${totalAmount.toFixed(2)}</span>
+              <span className="font-medium">₹{Number(totalAmount).toFixed(2)}</span>
             </div>
             <div className="flex justify-between text-sm">
               <span className="text-gray-600">Pickup Time</span>
@@ -238,7 +238,7 @@ export default function PaymentSystem({ cart, selectedPickupTime, onOrderComplet
             <div className="border-t pt-2 mt-2">
               <div className="flex justify-between text-lg font-bold">
                 <span>Total Amount</span>
-                <span className="text-green-600">${totalAmount.toFixed(2)}</span>
+                <span className="text-green-600">₹{Number(totalAmount).toFixed(2)}</span>
               </div>
             </div>
           </div>

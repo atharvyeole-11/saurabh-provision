@@ -51,7 +51,7 @@ export async function POST(request) {
         message: 'Registered (Demo Mode)'
       });
 
-      response.cookies.set('token', demoToken, {
+      response.cookies.set('auth_token', demoToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'strict',
@@ -106,7 +106,7 @@ export async function POST(request) {
       }
     });
 
-    response.cookies.set('token', token, {
+    response.cookies.set('auth_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',

@@ -13,7 +13,7 @@ export default function ProductCard({ product, onAddToCart }) {
   const currentQuantity = cartItem?.quantity || 0;
 
   const handleAddToCart = () => {
-    if (product.stock <= 0) return;
+    if (product.stockQuantity <= 0) return;
     addToCart(product, 1);
     onAddToCart?.();
   };
@@ -21,7 +21,7 @@ export default function ProductCard({ product, onAddToCart }) {
   const handleUpdateCartQuantity = (newQuantity) => {
     if (newQuantity <= 0) {
       removeFromCart(product._id);
-    } else if (newQuantity <= product.stock) {
+    } else if (newQuantity <= product.stockQuantity) {
       updateQuantity(product._id, newQuantity);
     }
   };
