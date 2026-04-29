@@ -6,9 +6,10 @@ import { successResponse, errorResponse } from '@/lib/api-response';
 function getDummyProducts() {
   return [
     {
-      _id: 'dummy1',
+      _id: '507f1f77bcf86cd799439011',
       name: 'Fresh Organic Tomatoes',
       price: 45,
+      mrp: 50,
       discount: 10,
       image: 'https://images.unsplash.com/photo-1592924357228-91a4daadcfea?auto=format&fit=crop&q=80',
       category: 'Vegetables',
@@ -17,10 +18,11 @@ function getDummyProducts() {
       stockQuantity: 50
     },
     {
-      _id: 'dummy2',
+      _id: '507f1f77bcf86cd799439012',
       name: 'Whole Wheat Bread',
       price: 35,
-      discount: 0,
+      mrp: 40,
+      discount: 12,
       image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&q=80',
       category: 'Bakery',
       description: 'Freshly baked whole wheat bread.',
@@ -28,9 +30,10 @@ function getDummyProducts() {
       stockQuantity: 20
     },
     {
-      _id: 'dummy3',
+      _id: '507f1f77bcf86cd799439013',
       name: 'Farm Fresh Eggs (1 Dozen)',
       price: 80,
+      mrp: 85,
       discount: 5,
       image: 'https://images.unsplash.com/photo-1582722872445-44dc5f7e3c8f?auto=format&fit=crop&q=80',
       category: 'Dairy',
@@ -39,9 +42,10 @@ function getDummyProducts() {
       stockQuantity: 100
     },
     {
-      _id: 'dummy4',
+      _id: '507f1f77bcf86cd799439014',
       name: 'Premium Basmati Rice',
       price: 150,
+      mrp: 175,
       discount: 15,
       image: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&q=80',
       category: 'Grains',

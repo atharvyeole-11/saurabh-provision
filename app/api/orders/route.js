@@ -1,6 +1,6 @@
 import { connectToDatabase } from '@/lib/mongodb';
 import Order from '@/models/Order';
-import { NextResponse } from 'next/server';
+import { successResponse, errorResponse } from '@/lib/api-response';
 
 export async function GET(request) {
   try {
@@ -24,23 +24,19 @@ export async function GET(request) {
     
     const total = await Order.countDocuments(query);
     
-    return NextResponse.json({
-      orders,
-      pagination: {
-        page,
-        limit,
-        total,
-        pages: Math.ceil(total / limit)
-      }
+    return successResponse({ orders }, {
+      page,
+      limit,
+      total,
+      pages: Math.ceil(total / limit)
     });
   } catch (error) {
     console.error('Error fetching orders:', error);
     // Demo fallback for orders
-    return NextResponse.json({
+    return successResponse({
       orders: [],
-      pagination: { page: 1, limit: 10, total: 0, pages: 0 },
       message: 'No orders found (Demo Mode)'
-    });
+    }, { page: 1, limit: 10, total: 0, pages: 0 });
   }
 }
 
@@ -68,10 +64,7 @@ export async function POST(request) {
     
     // Validate required fields
     if (!finalCustomerId || !items || !totalAmount || !pickupTime) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      );
+      return errorResponse('Missing required fields', 400);
     }
     
     // Generate unique Order ID
@@ -108,12 +101,9 @@ export async function POST(request) {
       }
     });
     
-    return NextResponse.json(order);
+    return successResponse({ order }, null, 201);
   } catch (error) {
     console.error('Error creating order:', error);
-    return NextResponse.json(
-      { error: 'Failed to create order' },
-      { status: 500 }
-    );
+    return errorResponse('Failed to create order', 500, error.message);
   }
 }

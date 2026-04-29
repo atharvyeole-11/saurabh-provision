@@ -36,14 +36,14 @@ export async function POST(request) {
     } catch (dbError) {
       console.warn('Database connection failed, using Demo Mode register:', dbError.message);
       const demoToken = jwt.sign(
-        { userId: 'demo-user-id', email: email, role: 'admin' },
+        { userId: '507f191e810c19729de860ea', email: email, role: 'admin' },
         process.env.JWT_SECRET || 'demo-secret',
         { expiresIn: '7d' }
       );
 
       const response = NextResponse.json({
         user: {
-          id: 'demo-user-id',
+          id: '507f191e810c19729de860ea',
           name: name,
           email: email,
           role: 'admin'

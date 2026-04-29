@@ -33,10 +33,10 @@ export async function GET(request) {
     
     // Fallback: If DB is not connected or any other error, and we have a decoded token, return dummy user
     const decoded = await getUserFromToken().catch(() => null);
-    if (decoded && decoded.userId === 'demo-user-id') {
+    if (decoded && (decoded.userId === '507f191e810c19729de860ea' || decoded.userId === 'demo-user-id')) {
       return NextResponse.json({
         user: {
-          id: 'demo-user-id',
+          id: '507f191e810c19729de860ea',
           name: 'Demo User',
           email: decoded.email || 'demo@example.com',
           role: 'admin',

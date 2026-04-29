@@ -21,14 +21,14 @@ export async function POST(request) {
       console.warn('Database connection failed, using Demo Mode login:', dbError.message);
       // Demo Mode Fallback
       const demoToken = jwt.sign(
-        { userId: 'demo-user-id', email: email, role: 'admin' },
+        { userId: '507f191e810c19729de860ea', email: email, role: 'admin' },
         process.env.JWT_SECRET || 'demo-secret',
         { expiresIn: '7d' }
       );
 
       const response = NextResponse.json({
         user: {
-          id: 'demo-user-id',
+          id: '507f191e810c19729de860ea',
           name: 'Demo User',
           email: email,
           role: 'admin'
@@ -54,13 +54,13 @@ export async function POST(request) {
     if (!user && email === 'demo@example.com') {
       console.log('User not found but using demo email, allowing demo login');
       const demoToken = jwt.sign(
-        { userId: 'demo-user-id', email: 'demo@example.com', role: 'admin' },
+        { userId: '507f191e810c19729de860ea', email: 'demo@example.com', role: 'admin' },
         process.env.JWT_SECRET || 'demo-secret',
         { expiresIn: '7d' }
       );
       
       const response = NextResponse.json({
-        user: { id: 'demo-user-id', name: 'Demo Admin', email: 'demo@example.com', role: 'admin' }
+        user: { id: '507f191e810c19729de860ea', name: 'Demo Admin', email: 'demo@example.com', role: 'admin' }
       });
       
       response.cookies.set('auth_token', demoToken, {
