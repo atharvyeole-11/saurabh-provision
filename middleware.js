@@ -13,14 +13,9 @@ export function middleware(request) {
     }
   }
 
-  // Redirect logged-in users away from auth pages
-  if ((pathname === '/login' || pathname === '/signup') && token) {
-    return NextResponse.redirect(new URL('/', request.url));
-  }
-
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/login', '/signup'],
+  matcher: ['/admin/:path*'],
 };
