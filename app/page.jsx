@@ -65,68 +65,95 @@ export default function Home() {
           }}></div>
         </div>
         
-        <div className="relative max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
+        <div className="relative max-w-7xl mx-auto px-4 py-16 sm:px-6 lg:px-24">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div className="text-center lg:text-left">
               <div className="mb-6 flex justify-center lg:justify-start">
                 <StoreStatus />
               </div>
-              <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
-                Your Neighborhood Store
-                <span className="block text-green-200 text-3xl md:text-5xl">Now in Malegaon</span>
+              <h1 className="text-4xl md:text-6xl font-extrabold mb-6 leading-tight tracking-tight">
+                Saurabh Provision
+                <span className="block text-orange-400 text-2xl md:text-4xl mt-2 font-semibold">Ready Before You Arrive</span>
               </h1>
-              <p className="text-xl mb-8 text-green-100 leading-relaxed">
-                Order groceries, snacks and stationary online. 
-                Choose your pickup time and collect when ready.
+              <p className="text-lg md:text-xl mb-10 text-green-50 leading-relaxed max-w-xl mx-auto lg:mx-0">
+                Order groceries & stationery online, choose your pickup time, and skip the waiting. Your neighborhood store is now at your fingertips.
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                 <Link 
                   href="/products" 
-                  className="bg-white text-green-700 px-8 py-4 rounded-xl font-bold hover:bg-gray-100 transition-all shadow-lg flex items-center justify-center"
+                  className="bg-orange-500 hover:bg-orange-600 text-white px-10 py-4 rounded-2xl font-bold transition-all shadow-xl shadow-orange-900/20 flex items-center justify-center transform hover:scale-105 active:scale-95"
                 >
                   <ShoppingCart className="w-5 h-5 mr-2" />
-                  Order Now
+                  Order for Pickup
                 </Link>
                 <Link 
                   href="tel:9766689821" 
-                  className="bg-green-500/20 backdrop-blur-sm border-2 border-white text-white px-8 py-4 rounded-xl font-bold hover:bg-white hover:text-green-700 transition-all flex items-center justify-center"
+                  className="bg-white/10 backdrop-blur-md border border-white/30 text-white px-10 py-4 rounded-2xl font-bold hover:bg-white/20 transition-all flex items-center justify-center"
                 >
                   <Phone className="w-5 h-5 mr-2" />
-                  Call Store
+                  9766689821
                 </Link>
+              </div>
+
+              <div className="mt-10 flex items-center justify-center lg:justify-start gap-6">
+                <div className="flex -space-x-3">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="w-10 h-10 rounded-full border-2 border-green-700 bg-gray-200 overflow-hidden shadow-md">
+                      <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${i + 10}`} alt="User" />
+                    </div>
+                  ))}
+                </div>
+                <div className="text-sm">
+                  <div className="flex items-center gap-1 text-orange-400">
+                    {[1, 2, 3, 4, 5].map((i) => <Star key={i} className="w-4 h-4 fill-current" />)}
+                  </div>
+                  <p className="text-green-100 font-medium">500+ Happy Customers in Malegaon</p>
+                </div>
               </div>
             </div>
             
-            <div className="hidden lg:block">
-              <div className="bg-white/10 backdrop-blur-md rounded-3xl p-8 border border-white/20 shadow-2xl">
-                <div className="space-y-6">
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <Search className="w-5 h-5 text-green-600" />
+            <div className="hidden lg:block relative">
+              <div className="absolute -inset-4 bg-orange-500/20 rounded-full blur-3xl animate-pulse"></div>
+              <div className="relative bg-white/10 backdrop-blur-xl rounded-[2.5rem] p-10 border border-white/20 shadow-2xl">
+                <div className="space-y-8">
+                  <div className="flex items-center gap-6 group">
+                    <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg transform group-hover:rotate-12 transition-transform">
+                      <Search className="w-7 h-7 text-green-600" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-lg">1. Browse & Select</h3>
-                      <p className="text-green-100">Pick from hundreds of fresh items</p>
+                      <h3 className="font-bold text-xl">Browse & Select</h3>
+                      <p className="text-green-100/80">Choose from fresh groceries & stationery</p>
                     </div>
                   </div>
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <Clock className="w-5 h-5 text-green-600" />
+                  <div className="flex items-center gap-6 group">
+                    <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg transform group-hover:rotate-12 transition-transform">
+                      <Clock className="w-7 h-7 text-green-600" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-lg">2. Choose Pickup Slot</h3>
-                      <p className="text-green-100">Tell us when you'll be coming</p>
+                      <h3 className="font-bold text-xl">Choose Pickup Slot</h3>
+                      <p className="text-green-100/80">Tell us when you'll be at the store</p>
                     </div>
                   </div>
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                      <Package className="w-5 h-5 text-green-600" />
+                  <div className="flex items-center gap-6 group">
+                    <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center flex-shrink-0 shadow-lg transform group-hover:rotate-12 transition-transform">
+                      <Package className="w-7 h-7 text-green-600" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-lg">3. Fast Collection</h3>
-                      <p className="text-green-100">Your order ready on the counter</p>
+                      <h3 className="font-bold text-xl">Quick Collection</h3>
+                      <p className="text-green-100/80">Grab your bag and go. No waiting!</p>
                     </div>
+                  </div>
+                </div>
+                
+                <div className="mt-10 pt-8 border-t border-white/10 flex items-center justify-between">
+                  <div>
+                    <p className="text-green-200 text-xs uppercase tracking-wider font-bold mb-1">Owner</p>
+                    <p className="font-bold text-lg">Vilas Yeole</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-green-200 text-xs uppercase tracking-wider font-bold mb-1">Store Timing</p>
+                    <p className="font-bold text-lg">7 AM - 11 PM</p>
                   </div>
                 </div>
               </div>

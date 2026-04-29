@@ -146,7 +146,8 @@ export default function AdminDashboard() {
       change: stats.todayOrders,
       changeLabel: 'today',
       icon: <ShoppingCart className="w-6 h-6" />,
-      color: 'blue'
+      color: 'bg-blue-50 text-blue-600',
+      borderColor: 'border-blue-100'
     },
     {
       title: 'Total Products',
@@ -154,7 +155,8 @@ export default function AdminDashboard() {
       change: stats.lowStockProducts.length,
       changeLabel: 'low stock',
       icon: <Package className="w-6 h-6" />,
-      color: 'green'
+      color: 'bg-green-50 text-green-600',
+      borderColor: 'border-green-100'
     },
     {
       title: 'Total Users',
@@ -162,30 +164,32 @@ export default function AdminDashboard() {
       change: '+12%',
       changeLabel: 'growth',
       icon: <Users className="w-6 h-6" />,
-      color: 'purple'
+      color: 'bg-purple-50 text-purple-600',
+      borderColor: 'border-purple-100'
     },
     {
       title: 'Revenue',
-      value: `$${stats.totalRevenue.toFixed(0)}`,
+      value: `₹${stats.totalRevenue.toFixed(0)}`,
       change: '+8%',
       changeLabel: 'this month',
       icon: <DollarSign className="w-6 h-6" />,
-      color: 'orange'
+      color: 'bg-orange-50 text-orange-600',
+      borderColor: 'border-orange-100'
     }
   ];
 
   const orderStatusCards = [
     {
-      title: 'Pending',
+      title: 'Pending Orders',
       value: stats.pendingOrders,
       icon: <Clock className="w-5 h-5" />,
       color: 'yellow',
       href: '/admin/orders?status=pending'
     },
     {
-      title: 'Ready',
+      title: 'Ready for Pickup',
       value: stats.totalOrders - stats.pendingOrders - stats.completedOrders,
-      icon: <Eye className="w-5 h-5" />,
+      icon: <Package className="w-5 h-5" />,
       color: 'blue',
       href: '/admin/orders?status=ready'
     },
@@ -199,89 +203,73 @@ export default function AdminDashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <Navbar />
-      
-      <div className="flex">
-        {/* Sidebar */}
-        <div className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-50 w-64 bg-white shadow-lg transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0`}>
-          <div className="flex items-center justify-between p-4 border-b">
-            <h2 className="text-lg font-semibold text-gray-900">Admin Panel</h2>
+    <div className="min-h-screen bg-gray-50 flex">
+      {/* Sidebar */}
+      <div className={`${sidebarOpen ? 'translate-x-0' : '-translate-x-full'} fixed inset-y-0 left-0 z-50 w-64 bg-white border-r border-gray-100 shadow-xl transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0`}>
+        <div className="flex items-center gap-3 p-6 border-b border-gray-50">
+          <div className="w-10 h-10 bg-green-600 rounded-xl flex items-center justify-center text-white font-black">SP</div>
+          <h2 className="text-xl font-black text-gray-900 tracking-tight">Saurabh<span className="text-green-600">Admin</span></h2>
+        </div>
+        
+        <nav className="p-4 space-y-2">
+          <Link href="/admin" className="flex items-center gap-3 p-3 rounded-xl bg-green-600 text-white font-bold shadow-lg shadow-green-900/20 transition-all">
+            <BarChart3 className="w-5 h-5" />
+            Dashboard
+          </Link>
+          <Link href="/admin/products" className="flex items-center gap-3 p-3 rounded-xl text-gray-600 hover:bg-green-50 hover:text-green-600 font-bold transition-all">
+            <Package className="w-5 h-5" />
+            Products
+          </Link>
+          <Link href="/admin/orders" className="flex items-center gap-3 p-3 rounded-xl text-gray-600 hover:bg-green-50 hover:text-green-600 font-bold transition-all">
+            <ShoppingCart className="w-5 h-5" />
+            Orders
+          </Link>
+          <Link href="/admin/promotions" className="flex items-center gap-3 p-3 rounded-xl text-gray-600 hover:bg-green-50 hover:text-green-600 font-bold transition-all">
+            <TrendingUp className="w-5 h-5" />
+            Promotions
+          </Link>
+          <Link href="/admin/users" className="flex items-center gap-3 p-3 rounded-xl text-gray-600 hover:bg-green-50 hover:text-green-600 font-bold transition-all">
+            <Users className="w-5 h-5" />
+            Users
+          </Link>
+        </nav>
+      </div>
+
+      {/* Main Content */}
+      <div className="flex-1 min-w-0 overflow-auto">
+        <div className="p-6 lg:p-10">
+          {/* Header */}
+          <div className="flex items-center justify-between mb-10">
+            <div>
+              <h1 className="text-3xl font-black text-gray-900">Store Overview</h1>
+              <p className="text-gray-500 font-medium">Hello Vilas Yeole, here's what's happening today.</p>
+            </div>
             <button
-              onClick={() => setSidebarOpen(false)}
-              className="lg:hidden p-2 rounded-lg hover:bg-gray-100"
+              onClick={() => setSidebarOpen(true)}
+              className="lg:hidden p-3 bg-white rounded-xl shadow-sm border border-gray-100"
             >
-              <X className="w-5 h-5" />
+              <Menu className="w-6 h-6" />
             </button>
           </div>
-          
-          <nav className="p-4 space-y-2">
-            <Link href="/admin" className="flex items-center gap-3 p-3 rounded-lg bg-green-100 text-green-700">
-              <BarChart3 className="w-5 h-5" />
-              Dashboard
-            </Link>
-            <Link href="/admin/products" className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100">
-              <Package className="w-5 h-5" />
-              Products
-            </Link>
-            <Link href="/admin/orders" className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100">
-              <ShoppingCart className="w-5 h-5" />
-              Orders
-            </Link>
-            <Link href="/admin/users" className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100">
-              <Users className="w-5 h-5" />
-              Users
-            </Link>
-            <Link href="/admin/promotions" className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-100">
-              <TrendingUp className="w-5 h-5" />
-              Promotions
-            </Link>
-          </nav>
-        </div>
 
-        {/* Mobile Sidebar Overlay */}
-        {sidebarOpen && (
-          <div 
-            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-            onClick={() => setSidebarOpen(false)}
-          />
-        )}
-
-        {/* Main Content */}
-        <div className="flex-1 lg:ml-0">
-          <div className="p-4 lg:p-8">
-            {/* Header */}
-            <div className="flex items-center justify-between mb-8">
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-                <p className="text-gray-600">Welcome back, {user?.name}</p>
-              </div>
-              <button
-                onClick={() => setSidebarOpen(true)}
-                className="lg:hidden p-2 rounded-lg hover:bg-gray-100"
-              >
-                <Menu className="w-5 h-5" />
-              </button>
-            </div>
-
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              {statCards.map((card, index) => (
-                <div key={index} className="bg-white rounded-lg shadow-sm p-6">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className={`p-3 rounded-lg bg-${card.color}-100 text-${card.color}-600`}>
-                      {card.icon}
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm text-gray-500">{card.changeLabel}</p>
-                      <p className="text-sm font-semibold text-green-600">{card.change}</p>
-                    </div>
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
+            {statCards.map((card, index) => (
+              <div key={index} className={`bg-white rounded-3xl border ${card.borderColor} p-6 shadow-sm hover:shadow-md transition-all`}>
+                <div className="flex items-center justify-between mb-4">
+                  <div className={`p-3 rounded-2xl ${card.color}`}>
+                    {card.icon}
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-900">{card.value}</h3>
-                  <p className="text-sm text-gray-600 mt-1">{card.title}</p>
+                  <div className="text-right">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{card.changeLabel}</p>
+                    <p className="text-sm font-black text-green-600">{card.change}</p>
+                  </div>
                 </div>
-              ))}
-            </div>
+                <h3 className="text-3xl font-black text-gray-900">{card.value}</h3>
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-widest mt-1">{card.title}</p>
+              </div>
+            ))}
+          </div>
 
             {/* Order Status */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
@@ -380,13 +368,11 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                 ))}
-              </div>
             </div>
           </div>
+          <Footer />
         </div>
       </div>
-      
-      <Footer />
     </div>
   );
 }

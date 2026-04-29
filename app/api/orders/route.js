@@ -50,17 +50,24 @@ export async function POST(request) {
     
     const body = await request.json();
     const {
+      user, // Alternative to customerId
       customerId,
       items,
       totalAmount,
+      subtotal,
+      discountAmount,
       pickupTime,
       paymentMethod,
+      paymentMode, // Alternative to paymentMethod
       paymentId,
       customerDetails
     } = body;
     
+    const finalCustomerId = customerId || user;
+    const finalPaymentMethod = paymentMethod || paymentMode || 'cash';
+    
     // Validate required fields
-    if (!customerId || !items || !totalAmount || !pickupTime || !paymentMethod) {
+    if (!finalCustomerId || !items || !totalAmount || !pickupTime) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -69,9 +76,9 @@ export async function POST(request) {
     
     // Generate unique Order ID
     const generateOrderId = () => {
-      const timestamp = Date.now();
-      const random = Math.floor(Math.random() * 1000);
-      return `ORD${timestamp}${random}`;
+      const timestamp = Date.now().toString().slice(-6);
+      const random = Math.floor(Math.random() * 100);
+      return `SP${timestamp}${random}`;
     };
     
     const orderId = generateOrderId();
@@ -79,36 +86,29 @@ export async function POST(request) {
     // Create order
     const order = await Order.create({
       orderId,
-      customerId,
+      customerId: finalCustomerId,
       items: items.map(item => ({
-        productId: item.productId,
+        productId: item.productId || item.product,
         name: item.name,
         price: item.price,
-        quantity: item.quantity,
+        quantity: item.quantity || item.qty,
         discount: item.discount || 0,
-        subtotal: item.price * item.quantity,
-        total: (item.price * item.quantity) - ((item.discount || 0) * item.price * item.quantity / 100)
+        subtotal: item.subtotal || (item.price * (item.quantity || item.qty)),
+        total: item.total || ((item.price * (item.quantity || item.qty)) - ((item.discount || 0) * item.price * (item.quantity || item.qty) / 100))
       })),
       totalAmount,
       pickupTime,
-      paymentMethod,
+      paymentMethod: finalPaymentMethod,
       paymentId: paymentId || null,
       status: 'pending',
       customerDetails: {
-        name: customerDetails?.name || 'Guest',
+        name: customerDetails?.name || 'Customer',
         phone: customerDetails?.phone || '',
         email: customerDetails?.email || ''
       }
     });
     
-    // Populate customer details
-    await order.populate('customerId', 'name phone email');
-    
-    return NextResponse.json({
-      success: true,
-      order,
-      message: 'Order placed successfully'
-    });
+    return NextResponse.json(order);
   } catch (error) {
     console.error('Error creating order:', error);
     return NextResponse.json(
