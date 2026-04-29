@@ -89,8 +89,8 @@ export default function OrderConfirmation({ order }) {
         
         <div class="section">
           <p><strong>Order ID:</strong> ${order.orderId}</p>
-          <p><strong>Date:</strong> ${order.formattedDate}</p>
-          <p><strong>Time:</strong> ${order.formattedTime}</p>
+          <p><strong>Date:</strong> ${order.formattedDate || new Date().toLocaleDateString('en-IN')}</p>
+          <p><strong>Time:</strong> ${order.formattedTime || new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</p>
           <p><strong>Customer:</strong> ${order.customerDetails.name}</p>
           <p><strong>Phone:</strong> ${order.customerDetails.phone}</p>
           <p><strong>Pickup Time:</strong> ${order.pickupTime}</p>
@@ -102,7 +102,7 @@ export default function OrderConfirmation({ order }) {
           ${order.items.map(item => `
             <div class="item">
               <span>${item.name} x${item.quantity}</span>
-              <span>$${item.total.toFixed(2)}</span>
+              <span>₹${item.total.toFixed(2)}</span>
             </div>
           `).join('')}
           <p>--------------------------------</p>
@@ -111,7 +111,7 @@ export default function OrderConfirmation({ order }) {
         <div class="section total">
           <div class="item">
             <span><strong>TOTAL AMOUNT:</strong></span>
-            <span>$${order.totalAmount.toFixed(2)}</span>
+            <span>₹${order.totalAmount.toFixed(2)}</span>
           </div>
           <div class="item">
             <span><strong>PAYMENT:</strong></span>

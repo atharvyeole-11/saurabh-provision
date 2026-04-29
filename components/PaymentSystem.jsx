@@ -146,18 +146,19 @@ export default function PaymentSystem({ cart, selectedPickupTime, onOrderComplet
         body: JSON.stringify(orderData),
       });
 
-      const { success, order } = await response.json();
+      const data = await response.json();
 
-      if (success) {
+      if (data.success) {
         clearCart();
-        onOrderComplete(order);
+        onOrderComplete(data.order);
       } else {
-        setError('Failed to place order. Please try again.');
+        const errorMsg = data.error || 'Failed to place order. Please try again.';
+        setError(errorMsg);
         setIsProcessing(false);
       }
     } catch (error) {
-      console.error('Order placement error:', error);
-      setError('Failed to place order. Please try again.');
+      console.error('Error creating order. Full error:', error);
+      setError('Failed to place order: ' + error.message);
       setIsProcessing(false);
     }
   };
