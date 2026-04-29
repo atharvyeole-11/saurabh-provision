@@ -41,6 +41,8 @@ export default function FestivalBanner({ data }) {
       'Eid': '🌙',
       'Christmas': '🎄',
       'New Year': '🎉',
+      'Summer Sale': '☀️',
+      'Winter Sale': '❄️',
       'Custom': '✨'
     };
     return emojis[festival] || '✨';
@@ -58,6 +60,8 @@ export default function FestivalBanner({ data }) {
       'Eid': 'linear-gradient(135deg, #10b981, #fbbf24)',
       'Christmas': 'linear-gradient(135deg, #dc2626, #16a34a)',
       'New Year': 'linear-gradient(135deg, #1f2937, #fbbf24)',
+      'Summer Sale': 'linear-gradient(135deg, #0ea5e9, #fbbf24)',
+      'Winter Sale': 'linear-gradient(135deg, #3b82f6, #93c5fd)',
       'Custom': `linear-gradient(135deg, ${bgColor}, ${bgColor}dd)`
     };
     return gradients[festival] || gradients['Custom'];

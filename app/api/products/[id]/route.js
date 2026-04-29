@@ -5,7 +5,7 @@ import { successResponse, errorResponse } from '@/lib/api-response';
 
 export async function GET(req, { params }) {
   try {
-    const { id } = params;
+    const { id } = await params;
     await connectToDatabase();
     
     const product = await Product.findById(id).populate('category');
@@ -27,7 +27,7 @@ export async function PUT(req, { params }) {
       return errorResponse('Unauthorized', 403);
     }
 
-    const { id } = params;
+    const { id } = await params;
     const body = await req.json();
     await connectToDatabase();
     
@@ -51,7 +51,7 @@ export async function DELETE(req, { params }) {
       return errorResponse('Unauthorized', 403);
     }
 
-    const { id } = params;
+    const { id } = await params;
     await connectToDatabase();
     
     const result = await Product.findByIdAndDelete(id);

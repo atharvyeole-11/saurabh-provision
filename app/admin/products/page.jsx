@@ -15,7 +15,7 @@ const emptyForm = {
 };
 
 export default function AdminProducts() {
-  const { isAdmin, loading } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
   const [products, setProducts] = useState([]);
   const [form, setForm] = useState(emptyForm);
@@ -24,9 +24,12 @@ export default function AdminProducts() {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (!loading && !isAdmin) router.push('/login');
-    if (isAdmin) fetchProducts();
-  }, [isAdmin, loading]);
+    if (!loading && (!user || user.role !== 'admin')) {
+      router.push('/login');
+    } else if (user?.role === 'admin') {
+      fetchProducts();
+    }
+  }, [user, loading, router]);
 
   const fetchProducts = async () => {
     try {

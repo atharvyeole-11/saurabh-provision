@@ -10,7 +10,7 @@ import { getCurrentFestival } from '@/lib/utils';
 
 export default function Promotions() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [banners, setBanners] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddForm, setShowAddForm] = useState(false);
@@ -30,12 +30,14 @@ export default function Promotions() {
   });
 
   useEffect(() => {
-    if (!user || user.role !== 'admin') {
-      router.push('/');
+    if (!authLoading && (!user || user.role !== 'admin')) {
+      router.push('/login');
       return;
     }
-    fetchBanners();
-  }, [user, router]);
+    if (user?.role === 'admin') {
+      fetchBanners();
+    }
+  }, [user, authLoading, router]);
 
   const fetchBanners = async () => {
     try {
@@ -257,12 +259,33 @@ export default function Promotions() {
                   {editingBanner ? 'Edit Banner' : 'Add New Banner'}
                 </h2>
                 <div className="flex gap-2">
-                  <button
-                    onClick={createSampleBanner}
-                    className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded text-sm"
-                  >
-                    Load Navratri Sample
-                  </button>
+                    <button
+                      onClick={createSampleBanner}
+                      className="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded text-sm"
+                    >
+                      Load Navratri Sample
+                    </button>
+                    <button
+                      onClick={() => {
+                        setFormData({
+                          title: "☀️ Summer Coolers Sale!",
+                          subtitle: "Beat the heat with our fresh juices and cold drinks!",
+                          festival: "Summer Sale",
+                          bgColor: "#0ea5e9",
+                          products: [
+                            { name: "Cold Drinks", price: "Starting ₹20" },
+                            { name: "Fresh Juice", price: "₹30" },
+                            { name: "Ice Creams", price: "20% OFF" }
+                          ],
+                          buttonText: "Shop Summer Essentials",
+                          buttonLink: "/products?category=Beverages",
+                          isActive: true
+                        });
+                      }}
+                      className="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded text-sm"
+                    >
+                      Load Summer Sample
+                    </button>
                   <button
                     onClick={resetForm}
                     className="text-gray-500 hover:text-gray-700"
@@ -299,6 +322,8 @@ export default function Promotions() {
                       <option value="Eid">Eid</option>
                       <option value="Christmas">Christmas</option>
                       <option value="New Year">New Year</option>
+                      <option value="Summer Sale">Summer Sale</option>
+                      <option value="Winter Sale">Winter Sale</option>
                     </select>
                   </div>
                 </div>

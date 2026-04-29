@@ -15,7 +15,7 @@ export async function GET(request, { params }) {
       );
     }
 
-    const { id } = params;
+    const { id } = await params;
     const order = await Order.findOne({ _id: id, userId: user._id })
       .populate('items.productId');
 
@@ -48,7 +48,7 @@ export async function PUT(request, { params }) {
       );
     }
 
-    const { id } = params;
+    const { id } = await params;
     const updateData = await request.json();
 
     const order = await Order.findOneAndUpdate(
@@ -86,7 +86,7 @@ export async function DELETE(request, { params }) {
       );
     }
 
-    const { id } = params;
+    const { id } = await params;
     const order = await Order.findOneAndDelete({ _id: id, userId: user._id });
 
     if (!order) {

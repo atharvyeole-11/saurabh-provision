@@ -16,7 +16,7 @@ export async function PUT(request, { params }) {
     }
 
     const body = await request.json();
-    const { id } = params;
+    const { id } = await params;
     
     // If setting isActive: true, deactivate all others first
     if (body.isActive) {
@@ -59,7 +59,7 @@ export async function PATCH(request, { params }) {
     }
 
     const body = await request.json();
-    const { id } = params;
+    const { id } = await params;
     
     // If toggling isActive, deactivate all others when activating one
     if (body.isActive === true) {
@@ -101,7 +101,7 @@ export async function DELETE(request, { params }) {
       );
     }
 
-    const { id } = params;
+    const { id } = await params;
     const banner = await Banner.findByIdAndDelete(id);
 
     if (!banner) {
