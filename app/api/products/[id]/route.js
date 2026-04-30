@@ -1,6 +1,6 @@
 import { connectToDatabase } from '@/lib/mongodb';
 import Product from '@/models/Product';
-import { requireAdmin } from '@/lib/auth';
+import { requireAdmin, requireManagerOrAdmin } from '@/lib/auth';
 import { successResponse, errorResponse } from '@/lib/api-response';
 
 export async function GET(req, { params }) {
@@ -22,9 +22,9 @@ export async function GET(req, { params }) {
 
 export async function PUT(req, { params }) {
   try {
-    const isAdmin = await requireAdmin();
-    if (!isAdmin) {
-      return errorResponse('Unauthorized', 403);
+    const isAuthorized = await requireManagerOrAdmin();
+    if (!isAuthorized) {
+      return errorResponse('Unauthorized: Admin or Manager access required', 403);
     }
 
     const { id } = await params;

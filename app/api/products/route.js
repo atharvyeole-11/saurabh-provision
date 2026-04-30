@@ -1,6 +1,6 @@
 import { connectToDatabase } from '@/lib/mongodb';
 import Product from '@/models/Product';
-import { requireAdmin } from '@/lib/auth';
+import { requireAdmin, requireManagerOrAdmin } from '@/lib/auth';
 import { successResponse, errorResponse } from '@/lib/api-response';
 
 function getDummyProducts() {
@@ -106,9 +106,9 @@ export async function GET(req) {
 
 export async function POST(req) {
   try {
-    const isAdmin = await requireAdmin();
-    if (!isAdmin) {
-      return errorResponse('Unauthorized: Admin access required', 403);
+    const isAuthorized = await requireManagerOrAdmin();
+    if (!isAuthorized) {
+      return errorResponse('Unauthorized: Admin or Manager access required', 403);
     }
     
     await connectToDatabase();

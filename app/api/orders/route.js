@@ -1,19 +1,34 @@
 import { connectToDatabase } from '@/lib/mongodb';
 import Order from '@/models/Order';
 import { successResponse, errorResponse } from '@/lib/api-response';
+import { getUserFromToken, requireManagerOrAdmin } from '@/lib/auth';
 
 export async function GET(request) {
   try {
     await connectToDatabase();
     
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
+    const requestedUserId = searchParams.get('userId');
     const status = searchParams.get('status');
     const page = parseInt(searchParams.get('page')) || 1;
     const limit = parseInt(searchParams.get('limit')) || 10;
     
+    const user = await getUserFromToken();
+    const isAdminOrManager = await requireManagerOrAdmin();
+    
+    if (!user && !isAdminOrManager) {
+      return errorResponse('Unauthorized', 401);
+    }
+    
     let query = {};
-    if (userId) query.customerId = userId;
+    if (!isAdminOrManager) {
+      // Normal users can only see their own orders
+      query.customerId = user.userId;
+    } else if (requestedUserId) {
+      // Admins/Managers can filter by requestedUserId
+      query.customerId = requestedUserId;
+    }
+    
     if (status) query.status = status;
     
     const orders = await Order.find(query)

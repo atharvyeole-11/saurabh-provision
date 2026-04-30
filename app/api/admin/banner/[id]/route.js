@@ -1,14 +1,14 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import Banner from '@/models/Banner';
-import { getUserFromToken } from '@/lib/auth';
+import { requireAdmin } from '@/lib/auth';
 
 export async function PUT(request, { params }) {
   try {
     const db = await connectToDatabase();
-    const user = await getUserFromToken();
+    const isAdmin = await requireAdmin();
     
-    if (!user || user.role !== 'admin') {
+    if (!isAdmin) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -49,9 +49,9 @@ export async function PUT(request, { params }) {
 export async function PATCH(request, { params }) {
   try {
     const db = await connectToDatabase();
-    const user = await getUserFromToken();
+    const isAdmin = await requireAdmin();
     
-    if (!user || user.role !== 'admin') {
+    if (!isAdmin) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -92,9 +92,9 @@ export async function PATCH(request, { params }) {
 export async function DELETE(request, { params }) {
   try {
     const db = await connectToDatabase();
-    const user = await getUserFromToken();
+    const isAdmin = await requireAdmin();
     
-    if (!user || user.role !== 'admin') {
+    if (!isAdmin) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }

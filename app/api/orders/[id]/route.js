@@ -1,14 +1,15 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import Order from '@/models/Order';
-import { getUserFromToken } from '@/lib/auth';
+import { getUserFromToken, requireAdmin, requireManagerOrAdmin } from '@/lib/auth';
 
 export async function GET(request, { params }) {
   try {
     const db = await connectToDatabase();
     const user = await getUserFromToken();
+    const isAdminOrManager = await requireManagerOrAdmin();
     
-    if (!user) {
+    if (!user && !isAdminOrManager) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -16,7 +17,13 @@ export async function GET(request, { params }) {
     }
 
     const { id } = await params;
-    const order = await Order.findOne({ _id: id, userId: user._id })
+    
+    let query = { _id: id };
+    if (!isAdminOrManager) {
+      query.customerId = user.userId;
+    }
+
+    const order = await Order.findOne(query)
       .populate('items.productId');
 
     if (!order) {
@@ -39,9 +46,9 @@ export async function GET(request, { params }) {
 export async function PUT(request, { params }) {
   try {
     const db = await connectToDatabase();
-    const user = await getUserFromToken();
+    const isAdminOrManager = await requireManagerOrAdmin();
     
-    if (!user || user.role !== 'admin') {
+    if (!isAdminOrManager) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -52,7 +59,7 @@ export async function PUT(request, { params }) {
     const updateData = await request.json();
 
     const order = await Order.findOneAndUpdate(
-      { _id: id, userId: user._id },
+      { _id: id },
       updateData,
       { new: true }
     );
@@ -77,9 +84,9 @@ export async function PUT(request, { params }) {
 export async function DELETE(request, { params }) {
   try {
     const db = await connectToDatabase();
-    const user = await getUserFromToken();
+    const isAdmin = await requireAdmin();
     
-    if (!user || user.role !== 'admin') {
+    if (!isAdmin) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -87,7 +94,7 @@ export async function DELETE(request, { params }) {
     }
 
     const { id } = await params;
-    const order = await Order.findOneAndDelete({ _id: id, userId: user._id });
+    const order = await Order.findOneAndDelete({ _id: id });
 
     if (!order) {
       return NextResponse.json(

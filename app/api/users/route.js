@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
-import { getUserFromToken } from '@/lib/auth';
+import { requireAdmin } from '@/lib/auth';
 
 export async function GET(request) {
   try {
-    const user = await getUserFromToken();
-    if (!user || user.role !== 'admin') {
+    const isAdmin = await requireAdmin();
+    if (!isAdmin) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
