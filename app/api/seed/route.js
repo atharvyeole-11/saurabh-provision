@@ -29,7 +29,8 @@ export async function GET() {
 
     console.log('Seeding products...');
     await Product.insertMany([
-      { name: 'Tata Salt 1kg', price: 22, mrp: 25, discount: 12, category: 'Grocery', stockQuantity: 50, unit: 'kg', description: 'Pure iodized salt', featured: true, expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) },
+      { name: 'Tata Salt 1kg', price: 30, mrp: 35, discount: 14, category: 'Grocery', stockQuantity: 50, unit: 'kg', description: 'Pure iodized salt', featured: true, expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) },
+      { name: 'Sugar 1kg', price: 45, mrp: 48, discount: 6, category: 'Grocery', stockQuantity: 100, unit: 'kg', description: 'Fine quality sugar', featured: true, expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) },
       { name: 'Aashirvaad Atta 5kg', price: 280, mrp: 310, discount: 10, category: 'Grocery', stockQuantity: 30, unit: 'kg', description: 'Premium wheat flour', featured: true, expiryDate: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000) },
       { name: 'Amul Butter 500g', price: 275, mrp: 285, discount: 3, category: 'Grocery', stockQuantity: 25, unit: 'g', description: 'Fresh dairy butter', featured: true, expiryDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) },
       { name: 'Fortune Sunflower Oil 1L', price: 145, mrp: 160, discount: 9, category: 'Grocery', stockQuantity: 40, unit: 'L', description: 'Refined sunflower oil', featured: true, expiryDate: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000) },

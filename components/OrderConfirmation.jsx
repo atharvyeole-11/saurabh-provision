@@ -16,39 +16,8 @@ import {
 
 export default function OrderConfirmation({ order }) {
   const [copied, setCopied] = useState(false);
-  const [autoRedirected, setAutoRedirected] = useState(false);
 
-  const handleWhatsAppShare = () => {
-    const message = `*SAURABH PROVISION - ORDER PREVIEW*\n` +
-      `--------------------------------\n` +
-      `*Order ID:* ${order.orderId}\n` +
-      `--------------------------------\n` +
-      `*Customer:* ${order.customerDetails.name || 'Guest'}\n` +
-      `*Phone:* ${order.customerDetails.phone || 'N/A'}\n` +
-      `*Pickup:* ${order.pickupTime}\n` +
-      `--------------------------------\n` +
-      `*Items:*\n` +
-      order.items.map(item => 
-        `• ${item.name} x${item.quantity} = ₹${(item.price * item.quantity).toFixed(2)}`
-      ).join('\n') +
-      `\n--------------------------------\n` +
-      `*TOTAL AMOUNT: ₹${order.totalAmount.toFixed(2)}*\n` +
-      `--------------------------------\n` +
-      `_Pre-order generated from Saurabh Store Website_`;
-
-    window.open(`https://wa.me/919766689821?text=${encodeURIComponent(message)}`, '_blank');
-  };
-
-  useEffect(() => {
-    // Automatically trigger WhatsApp share after 2 seconds for a seamless experience
-    const timer = setTimeout(() => {
-      if (!autoRedirected) {
-        handleWhatsAppShare();
-        setAutoRedirected(true);
-      }
-    }, 2000);
-    return () => clearTimeout(timer);
-  }, []);
+  if (!order) return null;
 
   const handleCopyOrderId = () => {
     navigator.clipboard.writeText(order.orderId);
@@ -56,11 +25,14 @@ export default function OrderConfirmation({ order }) {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleWhatsAppShare = () => {
+    const text = `Order Confirmed at Saurabh Provision!\nOrder ID: ${order.orderId}\nTotal: ₹${order.totalAmount}\nPickup Time: ${order.pickupTime}`;
+    window.open(`https://wa.me/919766689821?text=${encodeURIComponent(text)}`, '_blank');
+  };
+
   const handleDownloadBill = () => {
-    // Create a printable version of the bill
     const printWindow = window.open('', '_blank');
-    const billContent = generatePrintableBill();
-    printWindow.document.write(billContent);
+    printWindow.document.write(generatePrintableBill());
     printWindow.document.close();
     printWindow.print();
   };

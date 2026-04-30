@@ -8,7 +8,7 @@ function getDummyProducts() {
     {
       _id: '507f1f77bcf86cd799439011',
       name: 'Tata Salt 1kg',
-      price: 22,
+      price: 30,
       mrp: 25,
       discount: 12,
       image: 'https://images.unsplash.com/photo-1518110925495-5fe2c8dcffc2?auto=format&fit=crop&q=80',
@@ -52,6 +52,18 @@ function getDummyProducts() {
       description: 'Ball point pens for everyday writing.',
       inStock: true,
       stockQuantity: 80
+    },
+    {
+      _id: '507f1f77bcf86cd799439015',
+      name: 'Sugar 1kg',
+      price: 45,
+      mrp: 48,
+      discount: 6,
+      image: 'https://images.unsplash.com/photo-1581441363689-1f3c3c414635?auto=format&fit=crop&q=80',
+      category: 'Grocery',
+      description: 'Fine quality sugar for daily use.',
+      inStock: true,
+      stockQuantity: 100
     }
   ];
 }
