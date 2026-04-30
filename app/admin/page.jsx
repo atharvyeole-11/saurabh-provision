@@ -41,6 +41,7 @@ export default function AdminDashboard() {
     topProducts: []
   });
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [demoMode, setDemoMode] = useState(false);
 
   useEffect(() => {
     if (!user) {
@@ -130,8 +131,14 @@ export default function AdminDashboard() {
         lowStockProducts,
         topProducts
       });
+
+      // Detect Demo Mode if API responses contain demo data or if we failed to fetch some data
+      if (productsData.demoMode || ordersData.demoMode || !ordersRes.ok) {
+        setDemoMode(true);
+      }
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);
+      setDemoMode(true);
     } finally {
       setLoading(false);
     }
@@ -261,6 +268,23 @@ export default function AdminDashboard() {
               <Menu className="w-6 h-6" />
             </button>
           </div>
+
+          {/* Demo Mode Alert */}
+          {demoMode && (
+            <div className="mb-8 bg-orange-50 border-2 border-orange-200 rounded-2xl p-6 flex items-start gap-4">
+              <AlertTriangle className="w-8 h-8 text-orange-600 flex-shrink-0" />
+              <div>
+                <h3 className="text-lg font-black text-orange-900">Application in Demo Mode</h3>
+                <p className="text-orange-700 font-medium">
+                  The MongoDB database is not connected. You are seeing sample data, and any changes you make (adding products, banners, etc.) will not be saved permanently.
+                </p>
+                <div className="mt-4 p-3 bg-white/50 rounded-lg border border-orange-200">
+                  <p className="text-xs font-bold text-orange-800 uppercase tracking-widest mb-1">To Fix This:</p>
+                  <p className="text-sm text-orange-900">Set the <code className="bg-orange-100 px-1 rounded">MONGODB_URI</code> environment variable in your Vercel Dashboard.</p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Stats Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">

@@ -103,7 +103,7 @@ export async function GET(req) {
     
     // If database is connected but empty, still show dummy products for demonstration
     if (products.length === 0 && !searchParams.get('category') && !searchParams.get('search')) {
-      return successResponse({ products: getDummyProducts() }, { page: 1, pages: 1, total: 4 });
+      return successResponse({ products: getDummyProducts(), demoMode: true }, { page: 1, pages: 1, total: 4 });
     }
     
     return successResponse(
@@ -112,7 +112,7 @@ export async function GET(req) {
     );
   } catch (error) {
     console.error('GET /api/products error:', error);
-    return successResponse({ products: getDummyProducts() }, { page: 1, pages: 1, total: 4 });
+    return successResponse({ products: getDummyProducts(), demoMode: true }, { page: 1, pages: 1, total: 4 });
   }
 }
 
