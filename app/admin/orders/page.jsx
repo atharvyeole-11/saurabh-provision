@@ -5,21 +5,21 @@ import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 
 export default function AdminOrders() {
-  const { user, isAdmin, loading } = useAuth();
+  const { user, isManagerOrAdmin, loading } = useAuth();
   const router = useRouter();
   const [orders, setOrders] = useState([]);
   const [filter, setFilter] = useState('all');
   const [fetching, setFetching] = useState(true);
 
   useEffect(() => {
-    if (!loading && !isAdmin) router.push('/login');
-    if (isAdmin) fetchOrders();
-  }, [isAdmin, loading]);
+    if (!loading && !isManagerOrAdmin) router.push('/login');
+    if (isManagerOrAdmin) fetchOrders();
+  }, [isManagerOrAdmin, loading]);
 
   const fetchOrders = async () => {
     const res = await fetch('/api/orders');
     const data = await res.json();
-    setOrders(Array.isArray(data) ? data : []);
+    setOrders(Array.isArray(data.orders) ? data.orders : (Array.isArray(data) ? data : []));
     setFetching(false);
   };
 

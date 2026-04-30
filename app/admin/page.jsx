@@ -48,7 +48,7 @@ export default function AdminDashboard() {
       return;
     }
 
-    if (user.role !== 'admin') {
+    if (user.role !== 'admin' && user.role !== 'manager') {
       router.push('/');
       return;
     }
@@ -230,14 +230,18 @@ export default function AdminDashboard() {
             <ShoppingCart className="w-5 h-5" />
             Orders
           </Link>
-          <Link href="/admin/promotions" className="flex items-center gap-3 p-3 rounded-xl text-gray-600 hover:bg-green-50 hover:text-green-600 font-bold transition-all">
-            <TrendingUp className="w-5 h-5" />
-            Promotions
-          </Link>
-          <Link href="/admin/users" className="flex items-center gap-3 p-3 rounded-xl text-gray-600 hover:bg-green-50 hover:text-green-600 font-bold transition-all">
-            <Users className="w-5 h-5" />
-            Users
-          </Link>
+          {user?.role === 'admin' && (
+            <>
+              <Link href="/admin/promotions" className="flex items-center gap-3 p-3 rounded-xl text-gray-600 hover:bg-green-50 hover:text-green-600 font-bold transition-all">
+                <TrendingUp className="w-5 h-5" />
+                Promotions
+              </Link>
+              <Link href="/admin/users" className="flex items-center gap-3 p-3 rounded-xl text-gray-600 hover:bg-green-50 hover:text-green-600 font-bold transition-all">
+                <Users className="w-5 h-5" />
+                Users
+              </Link>
+            </>
+          )}
         </nav>
       </div>
 

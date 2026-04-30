@@ -37,13 +37,16 @@ export default function Navbar() {
             <Link href="/" className="text-gray-700 hover:text-green-600 transition-colors">
               Home
             </Link>
-            <Link href="/products" className="text-gray-700 hover:text-green-600 transition-colors">
-              Products
+            <Link href="/products?category=Grocery" className="text-gray-700 hover:text-green-600 transition-colors">
+              Grocery
+            </Link>
+            <Link href="/products?category=Stationery" className="text-gray-700 hover:text-green-600 transition-colors">
+              Stationery
             </Link>
             <Link href="/orders" className="text-gray-700 hover:text-green-600 transition-colors">
               Orders
             </Link>
-            {user?.role === 'admin' && (
+            {(user?.role === 'admin' || user?.role === 'manager') && (
               <Link href="/admin" className="text-gray-700 hover:text-green-600 transition-colors">
                 Admin
               </Link>
@@ -138,11 +141,18 @@ export default function Navbar() {
                 Home
               </Link>
               <Link
-                href="/products"
+                href="/products?category=Grocery"
                 className="block px-3 py-2 text-gray-700 hover:text-green-600 hover:bg-gray-50 rounded-md"
                 onClick={() => setIsMenuOpen(false)}
               >
-                Products
+                Grocery
+              </Link>
+              <Link
+                href="/products?category=Stationery"
+                className="block px-3 py-2 text-gray-700 hover:text-green-600 hover:bg-gray-50 rounded-md"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Stationery
               </Link>
               <Link
                 href="/orders"
@@ -151,7 +161,7 @@ export default function Navbar() {
               >
                 Orders
               </Link>
-              {user?.role === 'admin' && (
+              {(user?.role === 'admin' || user?.role === 'manager') && (
                 <Link
                   href="/admin"
                   className="block px-3 py-2 text-gray-700 hover:text-green-600 hover:bg-gray-50 rounded-md"

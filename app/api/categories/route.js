@@ -13,13 +13,12 @@ export async function GET() {
     
     // Fallback dummy data
     const dummyCategories = [
-      { _id: 'cat1', name: 'Vegetables', icon: '🥦' },
-      { _id: 'cat2', name: 'Fruits', icon: '🍎' },
-      { _id: 'cat3', name: 'Dairy', icon: '🥛' },
-      { _id: 'cat4', name: 'Bakery', icon: '🍞' },
-      { _id: 'cat5', name: 'Stationery', icon: '✏️' },
-      { _id: 'cat6', name: 'Household', icon: '🧹' },
-      { _id: 'cat7', name: 'Snacks', icon: '🥨' }
+      { _id: 'cat1', name: 'Grocery', icon: '🛒', slug: 'grocery' },
+      { _id: 'cat2', name: 'Stationery', icon: '✏️', slug: 'stationary' },
+      { _id: 'cat3', name: 'Fasting Items', icon: '🪔', slug: 'fasting' },
+      { _id: 'cat4', name: 'Snacks', icon: '🍿', slug: 'snacks' },
+      { _id: 'cat5', name: 'Daily Essentials', icon: '🧴', slug: 'daily' },
+      { _id: 'cat6', name: 'Beverages', icon: '🥤', slug: 'beverages' }
     ];
     
     return successResponse({ categories: dummyCategories });

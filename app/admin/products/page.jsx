@@ -22,11 +22,12 @@ export default function AdminProducts() {
   const [editing, setEditing] = useState(null);
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [scanning, setScanning] = useState(false);
 
   useEffect(() => {
-    if (!loading && (!user || user.role !== 'admin')) {
+    if (!loading && (!user || (user.role !== 'admin' && user.role !== 'manager'))) {
       router.push('/login');
-    } else if (user?.role === 'admin') {
+    } else if (user?.role === 'admin' || user?.role === 'manager') {
       fetchProducts();
     }
   }, [user, loading, router]);
@@ -112,7 +113,60 @@ export default function AdminProducts() {
 
       {showForm && (
         <form onSubmit={handleSubmit} className="bg-white border-2 border-green-100 rounded-[2rem] p-8 mb-10 shadow-xl animate-in slide-in-from-top duration-300">
-          <h2 className="text-xl font-bold mb-6 text-green-800">{editing ? 'Edit Product Details' : 'Create New Product'}</h2>
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-xl font-bold text-green-800">{editing ? 'Edit Product Details' : 'Create New Product'}</h2>
+            
+            {/* AI Scan Feature */}
+            <div className="relative">
+              <input 
+                type="file" 
+                accept="image/*" 
+                id="scanImage" 
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files[0];
+                  if (!file) return;
+                  
+                  setScanning(true);
+                  const formData = new FormData();
+                  formData.append('image', file);
+                  
+                  try {
+                    const res = await fetch('/api/admin/scan-product', {
+                      method: 'POST',
+                      body: formData
+                    });
+                    const result = await res.json();
+                    
+                    if (res.ok) {
+                      setForm(prev => ({
+                        ...prev,
+                        ...result.data,
+                        image: prev.image // Keep manual image if any, or maybe AI returns it
+                      }));
+                      toast.success(result.message || 'Product details extracted!', { duration: 5000 });
+                    } else {
+                      toast.error(result.error || 'Failed to scan product');
+                    }
+                  } catch (err) {
+                    toast.error('Network error while scanning');
+                  } finally {
+                    setScanning(false);
+                    e.target.value = ''; // Reset input
+                  }
+                }}
+              />
+              <label 
+                htmlFor="scanImage"
+                className={`cursor-pointer inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold shadow-sm transition ${
+                  scanning ? 'bg-gray-100 text-gray-500 cursor-wait' : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+                }`}
+              >
+                {scanning ? '⏳ Scanning...' : '📸 Scan with AI'}
+              </label>
+            </div>
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="md:col-span-2">
               <label className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Product Name *</label>

@@ -26,18 +26,18 @@ export async function GET(request) {
     const dummyBanners = [
       {
         _id: 'banner1',
-        title: 'Fresh Vegetables Daily',
-        subtitle: 'Get 20% off on all organic vegetables',
-        image: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&q=80',
-        link: '/products?category=Vegetables',
+        title: '🪔 Navratri Special Offers!',
+        subtitle: 'Fasting items available – Order now, pick up at your time!',
+        image: 'https://images.unsplash.com/photo-1604823191457-2f2e4a0c7f67?auto=format&fit=crop&q=80',
+        link: '/products?category=Fasting Items',
         type: 'hero'
       },
       {
         _id: 'banner2',
-        title: 'Premium Dairy Products',
-        subtitle: 'Fresh from the farm to your table',
-        image: 'https://images.unsplash.com/photo-1628088062854-d1870b4553da?auto=format&fit=crop&q=80',
-        link: '/products?category=Dairy',
+        title: 'Stationery Essentials',
+        subtitle: 'Notebooks, pens, and school supplies at great prices',
+        image: 'https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?auto=format&fit=crop&q=80',
+        link: '/products?category=Stationery',
         type: 'hero'
       }
     ];

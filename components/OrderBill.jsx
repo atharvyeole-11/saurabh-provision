@@ -1,5 +1,7 @@
 'use client'
-import { useRef } from 'react';
+import { useRef, useState } from 'react';
+import html2canvas from 'html2canvas';
+import jsPDF from 'jspdf';
 
 export default function OrderBill({ order }) {
   const billRef = useRef();
@@ -21,6 +23,28 @@ export default function OrderBill({ order }) {
     `);
     win.document.close();
     win.print();
+  };
+
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  const downloadPdf = async () => {
+    if (!billRef.current) return;
+    setIsGenerating(true);
+    try {
+      const canvas = await html2canvas(billRef.current, { scale: 2 });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`Order_Bill_${order.orderId || order._id?.slice(-6)}.pdf`);
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      alert('Failed to generate PDF. Please try again.');
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   if (!order) return null;
@@ -113,12 +137,21 @@ export default function OrderBill({ order }) {
         </div>
       </div>
 
-      <button
-        onClick={printBill}
-        className="mt-3 w-full bg-green-600 text-white py-2 rounded-lg text-sm hover:bg-green-700 transition"
-      >
-        🖨️ Print Bill
-      </button>
+      <div className="flex gap-2 mt-3">
+        <button
+          onClick={printBill}
+          className="flex-1 bg-green-600 text-white py-2 rounded-lg text-sm hover:bg-green-700 transition"
+        >
+          🖨️ Print
+        </button>
+        <button
+          onClick={downloadPdf}
+          disabled={isGenerating}
+          className="flex-1 bg-blue-600 text-white py-2 rounded-lg text-sm hover:bg-blue-700 transition disabled:opacity-50"
+        >
+          {isGenerating ? '⏳ PDF...' : '📄 PDF'}
+        </button>
+      </div>
     </div>
   );
 }

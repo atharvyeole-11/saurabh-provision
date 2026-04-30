@@ -83,9 +83,14 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const isAdmin = user?.role === 'admin';
+  const isManagerOrAdmin = user?.role === 'admin' || user?.role === 'manager';
+
   const value = {
     user,
     loading,
+    isAdmin,
+    isManagerOrAdmin,
     login,
     register,
     logout,

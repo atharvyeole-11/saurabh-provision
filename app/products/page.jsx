@@ -109,6 +109,29 @@ function ProductsContent() {
           
           <p className="text-gray-600 mb-6">Fresh groceries and stationary items available for pickup in Malegaon</p>
           
+          {/* Main Category Tabs */}
+          <div className="flex flex-wrap gap-2 mb-6">
+            <button
+              onClick={() => handleCategoryChange('')}
+              className={`pb-2 px-3 py-1 rounded-full font-medium text-sm transition-colors ${
+                selectedCategory === '' ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              All Products
+            </button>
+            {categories.map((cat) => (
+              <button
+                key={cat._id}
+                onClick={() => handleCategoryChange(cat.name)}
+                className={`pb-2 px-3 py-1 rounded-full font-medium text-sm transition-colors ${
+                  selectedCategory === cat.name ? 'bg-green-600 text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                {cat.icon} {cat.name}
+              </button>
+            ))}
+          </div>
+          
           <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
             <form onSubmit={handleSearch} className="flex-1 max-w-md">
               <div className="relative">
@@ -183,12 +206,12 @@ function ProductsContent() {
                         <input
                           type="radio"
                           name="category"
-                          value={category._id}
-                          checked={selectedCategory === category._id}
-                          onChange={() => handleCategoryChange(category._id)}
+                          value={category.name}
+                          checked={selectedCategory === category.name}
+                          onChange={() => handleCategoryChange(category.name)}
                           className="mr-2 text-green-600 focus:ring-green-500"
                         />
-                        <span className="text-gray-700">{category.name}</span>
+                        <span className="text-gray-700">{category.icon} {category.name}</span>
                       </label>
                     ))}
                   </div>
