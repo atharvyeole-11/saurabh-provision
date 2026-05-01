@@ -5,13 +5,16 @@ import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import Link from 'next/link';
+import PaymentQR from '@/components/PaymentQR';
 
 export default function CheckoutPage() {
-  const { cart, cartTotal, discountTotal, clearCart, pickupTime, paymentMode } = useCart();
+  const { cart, cartTotal, discountTotal, clearCart, pickupTime, paymentMode, setPaymentMode } = useCart();
   const { user } = useAuth();
   const router = useRouter();
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [showQR, setShowQR] = useState(false);
+  const [pendingOrderId, setPendingOrderId] = useState(null);
 
   useEffect(() => {
     if (!user) router.push('/login');
@@ -21,9 +24,18 @@ export default function CheckoutPage() {
   const handleConfirm = async () => {
     if (!user) { toast.error('Please login'); return; }
     if (!pickupTime) { toast.error('Please select pickup time'); return; }
+    
+    // If UPI selected, show QR first
+    if (paymentMode === 'upi' && !showQR) {
+      const tempId = 'SP' + Date.now().toString().slice(-6);
+      setPendingOrderId(tempId);
+      setShowQR(true);
+      return;
+    }
+    
     setLoading(true);
     try {
-      const orderId = 'SP' + Date.now().toString().slice(-6);
+      const orderId = pendingOrderId || ('SP' + Date.now().toString().slice(-6));
       const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -31,9 +43,9 @@ export default function CheckoutPage() {
           user: user.id,
           orderId,
           items: cart.map(i => ({
-            product: i._id,
+            product: i._id || i.productId,
             name: i.name,
-            qty: i.qty,
+            qty: i.qty || i.quantity || 1,
             price: i.price,
             discount: i.discount || 0
           })),
@@ -47,11 +59,12 @@ export default function CheckoutPage() {
       });
       const data = await res.json();
       if (res.ok) {
-        setOrder(data);
+        setOrder(data.order || data);
         clearCart();
+        setShowQR(false);
         toast.success('Order placed! 🎉');
       } else {
-        toast.error(data.error || 'Failed');
+        toast.error(data.error || 'Failed to place order');
       }
     } catch(e) {
       toast.error('Something went wrong');
@@ -59,6 +72,7 @@ export default function CheckoutPage() {
     setLoading(false);
   };
 
+  // Order confirmation screen
   if (order) {
     return (
       <div className="min-h-screen bg-green-50 flex items-center justify-center p-6">
@@ -83,7 +97,7 @@ export default function CheckoutPage() {
             <div className="flex justify-between items-center">
               <span className="text-gray-500 text-sm font-bold">PAYMENT</span>
               <span className="font-bold text-gray-900 uppercase text-xs px-2 py-1 bg-green-100 text-green-700 rounded-md">
-                {order.paymentMethod === 'cash' ? 'Cash on Pickup' : 'Online Paid'}
+                {order.paymentMethod === 'upi' ? 'UPI Paid' : order.paymentMethod === 'cash' ? 'Cash on Pickup' : 'Online'}
               </span>
             </div>
             <div className="flex justify-between items-center pt-3 border-t border-gray-200">
@@ -93,16 +107,16 @@ export default function CheckoutPage() {
           </div>
 
           <div className="flex flex-col gap-3">
-            <Link href="/orders" className="bg-green-600 text-white py-4 rounded-2xl font-bold hover:bg-green-700 transition shadow-lg shadow-green-900/20 transform active:scale-95">
+            <Link href="/orders" className="bg-green-600 text-white py-4 rounded-2xl font-bold hover:bg-green-700 transition shadow-lg shadow-green-900/20 transform active:scale-95 text-center">
               Track My Order
             </Link>
-            <Link href="/" className="text-gray-500 hover:text-green-600 font-bold transition text-sm">
+            <Link href="/" className="text-gray-500 hover:text-green-600 font-bold transition text-sm text-center">
               Back to Home
             </Link>
           </div>
           
           <p className="mt-8 text-[10px] text-gray-400 uppercase tracking-widest font-bold">
-            Please show this order ID at the counter for quick pickup.
+            Show this order ID at the counter for quick pickup
           </p>
         </div>
       </div>
@@ -124,12 +138,12 @@ export default function CheckoutPage() {
               </h2>
               <div className="space-y-4 mb-6 max-h-[400px] overflow-y-auto pr-2">
                 {cart.map((item) => (
-                  <div key={item._id} className="flex justify-between gap-4 py-2 border-b border-gray-50 last:border-0">
+                  <div key={item._id || item.productId} className="flex justify-between gap-4 py-2 border-b border-gray-50 last:border-0">
                     <div className="flex-1">
                       <p className="font-bold text-sm text-gray-900 line-clamp-1">{item.name}</p>
-                      <p className="text-xs text-gray-500">Qty: {item.qty} × ₹{item.price}</p>
+                      <p className="text-xs text-gray-500">Qty: {item.qty || item.quantity || 1} × ₹{item.price}</p>
                     </div>
-                    <p className="font-bold text-sm text-gray-900">₹{item.qty * item.price}</p>
+                    <p className="font-bold text-sm text-gray-900">₹{(item.qty || item.quantity || 1) * item.price}</p>
                   </div>
                 ))}
               </div>
@@ -137,17 +151,17 @@ export default function CheckoutPage() {
               <div className="space-y-3 pt-4 border-t-2 border-dashed border-gray-100">
                 <div className="flex justify-between text-gray-500 font-medium">
                   <span>Subtotal</span>
-                  <span>₹{cartTotal + discountTotal}</span>
+                  <span>₹{(cartTotal + discountTotal).toFixed(0)}</span>
                 </div>
                 {discountTotal > 0 && (
                   <div className="flex justify-between text-green-600 font-bold">
                     <span>Discount</span>
-                    <span>-₹{discountTotal}</span>
+                    <span>-₹{discountTotal.toFixed(0)}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-xl font-black text-gray-900 pt-2">
                   <span>Payable</span>
-                  <span className="text-green-600">₹{cartTotal}</span>
+                  <span className="text-green-600">₹{cartTotal.toFixed(0)}</span>
                 </div>
               </div>
             </div>
@@ -158,12 +172,12 @@ export default function CheckoutPage() {
             <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 mb-6">
               <h2 className="text-xl font-bold mb-6 flex items-center gap-2">
                 <span className="w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center text-sm">2</span>
-                Pickup Details
+                Payment & Pickup
               </h2>
               
               <div className="space-y-6">
                 <div>
-                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Selected Pickup Time</label>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Pickup Time</label>
                   <div className="p-4 bg-green-50 border border-green-100 rounded-2xl text-green-800 font-bold flex items-center justify-between">
                     <span>{pickupTime || 'No time selected'}</span>
                     <Link href="/cart" className="text-xs text-green-600 underline">Change</Link>
@@ -172,28 +186,73 @@ export default function CheckoutPage() {
 
                 <div>
                   <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Payment Method</label>
-                  <div className="p-4 bg-orange-50 border border-orange-100 rounded-2xl text-orange-800 font-bold flex items-center justify-between">
-                    <span className="capitalize">{paymentMode === 'cash' ? 'Cash on Pickup' : 'Online Payment'}</span>
-                    <Link href="/cart" className="text-xs text-orange-600 underline">Change</Link>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => { setPaymentMode('cash'); setShowQR(false); }}
+                      className={`p-4 rounded-2xl border-2 font-bold text-sm transition ${
+                        paymentMode === 'cash' 
+                          ? 'border-green-500 bg-green-50 text-green-700' 
+                          : 'border-gray-100 text-gray-500 hover:border-gray-200'
+                      }`}
+                    >
+                      💵 Cash on Pickup
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMode('upi')}
+                      className={`p-4 rounded-2xl border-2 font-bold text-sm transition ${
+                        paymentMode === 'upi' 
+                          ? 'border-green-500 bg-green-50 text-green-700' 
+                          : 'border-gray-100 text-gray-500 hover:border-gray-200'
+                      }`}
+                    >
+                      📱 UPI / QR Pay
+                    </button>
                   </div>
                 </div>
 
-                <div className="pt-6">
-                  <button
-                    onClick={handleConfirm}
-                    disabled={loading || cart.length === 0}
-                    className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-200 text-white py-5 rounded-2xl font-black text-lg transition shadow-xl shadow-green-900/20 flex items-center justify-center gap-3 active:scale-95 transform"
-                  >
-                    {loading ? (
-                      <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    ) : (
-                      <>CONFIRM ORDER (₹{cartTotal})</>
-                    )}
-                  </button>
-                  <p className="text-center text-[10px] text-gray-400 mt-4 uppercase font-bold tracking-widest">
-                    Secure transaction · Faster pickup
-                  </p>
-                </div>
+                {/* UPI QR Code */}
+                {showQR && paymentMode === 'upi' && (
+                  <div className="animate-in slide-in-from-bottom duration-300">
+                    <PaymentQR 
+                      amount={cartTotal.toFixed(0)} 
+                      orderId={pendingOrderId}
+                      merchantUpi={process.env.NEXT_PUBLIC_MERCHANT_UPI || "vilas@upi"}
+                    />
+                    <button
+                      onClick={handleConfirm}
+                      disabled={loading}
+                      className="w-full mt-4 bg-green-600 hover:bg-green-700 text-white py-4 rounded-2xl font-black text-lg transition shadow-xl shadow-green-900/20 flex items-center justify-center gap-2"
+                    >
+                      {loading ? (
+                        <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        "I've Paid — Place Order"
+                      )}
+                    </button>
+                  </div>
+                )}
+
+                {/* Confirm Button (non-UPI) */}
+                {!showQR && (
+                  <div className="pt-4">
+                    <button
+                      onClick={handleConfirm}
+                      disabled={loading || cart.length === 0}
+                      className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-200 text-white py-5 rounded-2xl font-black text-lg transition shadow-xl shadow-green-900/20 flex items-center justify-center gap-3 active:scale-95 transform"
+                    >
+                      {loading ? (
+                        <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <>CONFIRM ORDER (₹{cartTotal.toFixed(0)})</>
+                      )}
+                    </button>
+                    <p className="text-center text-[10px] text-gray-400 mt-4 uppercase font-bold tracking-widest">
+                      Secure · Quick Pickup
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </div>

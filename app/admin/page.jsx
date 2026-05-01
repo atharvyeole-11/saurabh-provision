@@ -42,6 +42,8 @@ export default function AdminDashboard() {
   });
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [demoMode, setDemoMode] = useState(false);
+  const [seeding, setSeeding] = useState(false);
+  const [seedResult, setSeedResult] = useState(null);
 
   useEffect(() => {
     if (!user) {
@@ -141,6 +143,29 @@ export default function AdminDashboard() {
       setDemoMode(true);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSeedDatabase = async () => {
+    if (!confirm('This will RESET your database and add default products, categories, and an admin user. Continue?')) {
+      return;
+    }
+    
+    setSeeding(true);
+    setSeedResult(null);
+    try {
+      const res = await fetch('/api/seed');
+      const data = await res.json();
+      if (res.ok) {
+        setSeedResult({ success: true, message: data.message });
+        await fetchDashboardData();
+      } else {
+        setSeedResult({ success: false, message: data.error || 'Seeding failed' });
+      }
+    } catch (error) {
+      setSeedResult({ success: false, message: 'Failed to connect to seed API' });
+    } finally {
+      setSeeding(false);
     }
   };
 
@@ -281,9 +306,47 @@ export default function AdminDashboard() {
                 <div className="mt-4 p-3 bg-white/50 rounded-lg border border-orange-200">
                   <p className="text-xs font-bold text-orange-800 uppercase tracking-widest mb-1">To Fix This:</p>
                   <p className="text-sm text-orange-900">Set the <code className="bg-orange-100 px-1 rounded">MONGODB_URI</code> environment variable in your Vercel Dashboard.</p>
+                  <p className="text-sm text-orange-900 mt-2">Also, set <code className="bg-orange-100 px-1 rounded">GEMINI_API_KEY</code> to enable the AI Scan-to-Add feature.</p>
                 </div>
+                
+                {!demoMode && (
+                  <div className="mt-6 flex flex-col gap-3">
+                    <button
+                      onClick={handleSeedDatabase}
+                      disabled={seeding}
+                      className="bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-xl font-bold transition-all disabled:opacity-50 flex items-center justify-center gap-2"
+                    >
+                      {seeding ? (
+                        <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
+                      ) : (
+                        <CheckCircle className="w-5 h-5" />
+                      )}
+                      Initialize/Reset Database (Seed)
+                    </button>
+                    {seedResult && (
+                      <div className={`text-sm font-bold ${seedResult.success ? 'text-green-600' : 'text-red-600'}`}>
+                        {seedResult.message}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
+          )}
+
+          {/* Real Seeder for non-demo mode (to initialize DB) */}
+          {!demoMode && stats.totalProducts === 0 && (
+             <div className="mb-8 bg-green-50 border-2 border-green-200 rounded-2xl p-6">
+                <h3 className="text-lg font-black text-green-900">Database Connected!</h3>
+                <p className="text-green-700 font-medium mb-4">Your database is empty. Would you like to seed it with default products and categories?</p>
+                <button
+                  onClick={handleSeedDatabase}
+                  disabled={seeding}
+                  className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-bold transition-all disabled:opacity-50"
+                >
+                  {seeding ? 'Seeding...' : 'Seed Database Now'}
+                </button>
+             </div>
           )}
 
           {/* Stats Grid */}

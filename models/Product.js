@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 const ProductSchema = new mongoose.Schema({
   name: { type: String, required: true },
+  brand: { type: String, default: '' },
   mrp: { type: Number, required: true },
   price: { type: Number, required: true }, // This will be the discounted price
   discount: { type: Number, default: 0 }, // Percentage discount
